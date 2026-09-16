@@ -6,6 +6,7 @@ import { AppDataSource } from "./src/shared/db/data-source";
 import { errorHandler, notFoundHandler } from "./src/shared/middleware/error.middleware";
 
 import { authRouter } from "./src/features/authentication/auth.routes";
+import { contentsRouter } from "./src/features/contents/contents.routes";
 // import { rolesRouter } from "./src/features/roles/roles.routes";
 // import { usersRouter } from "./src/features/users/users.routes";
 // import { projectsRouter } from "./src/features/projects/projects.routes";

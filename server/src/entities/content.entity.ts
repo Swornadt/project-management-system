@@ -35,6 +35,9 @@ export class Content {
   @Column({ type: "varchar", length: 20, default: "draft" })
   status!: string;
 
+  @Column({ type: "int", default: 1 })
+  version!: number;
+
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
 
