@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #5645d4;
+  --color-primary-pressed: #4534b3;
+  --color-primary-deep: #3a2a99;
+  --color-primary-container: #5645d4;
+  --color-on-primary: #ffffff;
+  --color-canvas: #ffffff;
+  --color-surface: #f7f6f5;
+  --color-surface-soft: #fafaf9;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f0f4f8;
+  --color-surface-container: #eaeef2;
+  --color-surface-container-high: #e4e9ec;
+  --color-surface-container-highest: #dfe3e7;
+  --color-charcoal: #37352f;
+  --color-slate: #5d5b54;
+  --color-stone: #9b9a97;
+  --color-muted: #c4c2be;
+  --color-brand-orange: #dd5b00;
+  --color-brand-green: #1aae39;
+  --color-link-blue: #0075de;
+  --color-card-tint-peach: #ffe8d4;
+  --color-card-tint-rose: #fde0ec;
+  --color-card-tint-mint: #d9f3e1;
+  --color-card-tint-lavender: #e6e0f5;
+  --color-card-tint-sky: #dcecfa;
+  --color-card-tint-yellow: #fef7d6;
+  --color-card-tint-yellow-bold: #f9e79f;
+  --color-card-tint-cream: #f8f5e8;
+  --color-card-tint-gray: #f0eeec;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #37352f;
+  background-color: #f7f6f5;
+}
+
+/* Custom scrollbars hidden like Notion */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
