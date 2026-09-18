@@ -6,6 +6,7 @@ import { AppDataSource } from "./src/shared/db/data-source";
 import { errorHandler, notFoundHandler } from "./src/shared/middleware/error.middleware";
 
 import { authRouter } from "./src/features/authentication/auth.routes";
+import { contentsRouter } from "./src/features/contents/content.routes";
 // import { rolesRouter } from "./src/features/roles/roles.routes";
 // import { usersRouter } from "./src/features/users/users.routes";
 // import { projectsRouter } from "./src/features/projects/projects.routes";
@@ -35,6 +36,7 @@ app.get("/", (_req, res) => {
 });
 
 app.use(`${API_PREFIX}/auth`, authRouter);
+app.use(`${API_PREFIX}/contents`, contentsRouter);
 // app.use(`${API_PREFIX}/roles`, rolesRouter);
 // app.use(`${API_PREFIX}/users`, usersRouter);
 // app.use(`${API_PREFIX}/projects`, projectsRouter);

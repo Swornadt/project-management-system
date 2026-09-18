@@ -1,8 +1,9 @@
+import ContentDashboard from "./features/content/ContentDashboard";
 
 const App = () => {
   return (
     <div>
-      Frontend working
+      <ContentDashboard />
     </div>
   );
 }

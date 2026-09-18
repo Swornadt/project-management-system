@@ -18,6 +18,7 @@ import { File } from "../../entities/file.entity";
 import { ProjectFile } from "../../entities/project-file.entity";
 import { Notification } from "../../entities/notification.entity";
 import { ActivityLog } from "../../entities/activity-log.entity";
+import { Approval } from "../../entities/approval.entity";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -45,6 +46,7 @@ export const AppDataSource = new DataSource({
     ProjectFile,
     Notification,
     ActivityLog,
+    Approval
   ],
   synchronize: true,
   logging: true,
