@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { SlidersHorizontal, Plus, ChevronDown, RefreshCw } from 'lucide-react';
 import { Sidebar } from '../../components/layout/Sidebar';
 import { Header } from '../../components/layout/Header';
@@ -7,11 +7,15 @@ import { ViewModeDrawer } from './ViewModeDrawer';
 import { ContentFilters } from './ContentFilters';
 import { ContentTable } from './ContentTable';
 import { ArticleDrawer } from './ArticleDrawer';
-import { NewContentModal } from './NewContentModal';
+import { NewContentModal, type NewContentPayload } from './NewContentModal';
 import { QuickSearchModal } from './QuickSearchModal';
 import { Toast } from '../../components/layout/Toast';
 import { OtherViews } from './OtherViews';
-import { INITIAL_CONTENT_ITEMS } from '../../data/mockContent';
+import { contentApi } from '../../api/axiosClient';
+import {
+  apiToContentItem,
+  contentItemToUpdateDto,
+} from './contentMapper';
 import type {
   ContentItem,
   ContentStatus,
@@ -21,14 +25,36 @@ import type {
   ActiveNavKey,
 } from '../../types';
 
+// STOPGAP: there's no auth or a real Projects API yet (both /users and
+// /projects are commented out in server/index.ts), so there's no logged-in
+// user and no real project to attach new content to. Set these to a real
+// seeded project/user UUID from your dev database to actually create or
+// review content end-to-end. Once auth exists, project_id/author_id should
+// come from real context instead of env vars — replace this block then.
+const DEV_PROJECT_ID = import.meta.env.VITE_DEV_PROJECT_ID as string | undefined;
+const DEV_AUTHOR_ID = import.meta.env.VITE_DEV_AUTHOR_ID as string | undefined;
+// Must differ from DEV_AUTHOR_ID — the backend 403s a reviewer approving
+// their own content (content.service.ts's self-approval check).
+const DEV_REVIEWER_ID = import.meta.env.VITE_DEV_REVIEWER_ID as string | undefined;
+
+function extractErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const response = (err as { response?: { data?: { message?: string } } }).response;
+    if (response?.data?.message) return response.data.message;
+  }
+  return err instanceof Error ? err.message : 'Something went wrong';
+}
+
 export const ContentDashboard = () => {
   // Navigation
   const [activeNav, setActiveNav] = useState<ActiveNavKey>('content-publishing');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Content state
-  const [allItems, setAllItems] = useState<ContentItem[]>(INITIAL_CONTENT_ITEMS);
+  const [allItems, setAllItems] = useState<ContentItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Filter and view controls
   const [currentStatus, setCurrentStatus] = useState<ContentStatus>('all');
@@ -60,6 +86,29 @@ export const ContentDashboard = () => {
   const showToast = (title: string, subtitle?: string) => {
     setToast({ open: true, title, subtitle });
   };
+
+  // Fetch content from the real API on mount. Sorting/filtering below still
+  // happens client-side over this full set, same as before — only the
+  // source of the data changed, not how the list/table consume it.
+  useEffect(() => {
+    let cancelled = false;
+    contentApi
+      .list({ limit: 200 })
+      .then((res) => {
+        if (cancelled) return;
+        setAllItems(res.data.map(apiToContentItem));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setLoadError(extractErrorMessage(err));
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Status Counts
   const statusCounts = useMemo(() => {
@@ -132,23 +181,97 @@ export const ContentDashboard = () => {
     showToast(item.title, 'Opening in reader drawer...');
   };
 
-  const handleCreateItem = (newItem: ContentItem) => {
-    setAllItems((prev) => [newItem, ...prev]);
-    showToast('Publication Created', `"${newItem.title}" added to ${newItem.projectName}`);
+  const handleCreateItem = async (payload: NewContentPayload) => {
+    if (!DEV_PROJECT_ID || !DEV_AUTHOR_ID) {
+      throw new Error(
+        'No project/author configured — set VITE_DEV_PROJECT_ID and VITE_DEV_AUTHOR_ID in .env (see the comment near the top of this file).'
+      );
+    }
+    const res = await contentApi.create({
+      project_id: DEV_PROJECT_ID,
+      author_id: DEV_AUTHOR_ID,
+      title: payload.title,
+      slug: payload.slug,
+      body: payload.body,
+    });
+    const created = apiToContentItem(res.data);
+    setAllItems((prev) => [created, ...prev]);
+    showToast('Publication Created', `"${created.title}" added`);
   };
 
-  const handleUpdateItem = (updated: ContentItem) => {
-    setAllItems((prev) => prev.map((it) => (it.id === updated.id ? updated : it)));
+  const handleSaveEdits = async (
+    id: string,
+    edits: { title: string; summary: string; body: string }
+  ) => {
+    const res = await contentApi.update(
+      id,
+      contentItemToUpdateDto({ title: edits.title, body: edits.body })
+    );
+    const updated = apiToContentItem(res.data);
+    // summary has no backend field yet — keep it client-side so it isn't
+    // silently dropped from the drawer until Content grows a real column.
+    const merged = { ...updated, summary: edits.summary };
+    setAllItems((prev) => prev.map((it) => (it.id === id ? merged : it)));
+    setSelectedItem(merged);
+  };
+
+  const handleSubmitForApproval = async (id: string) => {
+    const res = await contentApi.submitForApproval(id);
+    const updated = apiToContentItem(res.data);
+    setAllItems((prev) => prev.map((it) => (it.id === id ? updated : it)));
     setSelectedItem(updated);
   };
 
-  const handleDeleteItem = (id: string) => {
-    const target = allItems.find((i) => i.id === id);
-    setAllItems((prev) => prev.filter((it) => it.id !== id));
-    if (selectedItem?.id === id) {
-      setSelectedItem(null);
+  const handleApprove = async (id: string) => {
+    if (!DEV_REVIEWER_ID) {
+      throw new Error('No reviewer configured — set VITE_DEV_REVIEWER_ID in .env.');
     }
-    showToast('Document Deleted', target ? `Removed "${target.title}"` : 'Publication removed');
+    const res = await contentApi.decideApproval(id, {
+      reviewer_id: DEV_REVIEWER_ID,
+      decision: 'approved',
+    });
+    const updated = apiToContentItem(res.data);
+    setAllItems((prev) => prev.map((it) => (it.id === id ? updated : it)));
+    setSelectedItem(updated);
+  };
+
+  const handleReject = async (id: string, reason: string) => {
+    if (!DEV_REVIEWER_ID) {
+      throw new Error('No reviewer configured — set VITE_DEV_REVIEWER_ID in .env.');
+    }
+    const res = await contentApi.decideApproval(id, {
+      reviewer_id: DEV_REVIEWER_ID,
+      decision: 'rejected',
+      reason,
+    });
+    // rejectionReason isn't in ApiContentResponse (GET doesn't return
+    // approval history — see the note in contentMapper.ts), so it's applied
+    // here from what we already know locally rather than dropped. It'll
+    // survive until the next refetch, then disappear — a known gap.
+    const updated = { ...apiToContentItem(res.data), rejectionReason: reason };
+    setAllItems((prev) => prev.map((it) => (it.id === id ? updated : it)));
+    setSelectedItem(updated);
+  };
+
+  const handlePublish = async (id: string) => {
+    const res = await contentApi.publish(id);
+    const updated = apiToContentItem(res.data);
+    setAllItems((prev) => prev.map((it) => (it.id === id ? updated : it)));
+    setSelectedItem(updated);
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    const target = allItems.find((i) => i.id === id);
+    try {
+      await contentApi.remove(id);
+      setAllItems((prev) => prev.filter((it) => it.id !== id));
+      if (selectedItem?.id === id) {
+        setSelectedItem(null);
+      }
+      showToast('Document Deleted', target ? `Removed "${target.title}"` : 'Publication removed');
+    } catch (err) {
+      showToast('Delete Failed', extractErrorMessage(err));
+    }
   };
 
   const handleLoadMore = () => {
@@ -185,7 +308,22 @@ export const ContentDashboard = () => {
         {/* Page Content Body */}
         <main className="relative pt-14 w-full px-4 sm:px-8 bg-white min-h-[calc(100vh-3.5rem)]">
           <div className="max-w-[1240px] w-full mx-auto py-8 px-1 sm:px-4 flex flex-col gap-6">
-            {activeNav === 'content-publishing' ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-24 text-[#5d5b54] text-sm gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Loading content...</span>
+              </div>
+            ) : loadError ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
+                <p className="text-sm text-[#ba1a1a]">Couldn't load content: {loadError}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-3 py-1.5 rounded-lg bg-[#5645d4] hover:bg-[#4534b3] text-white text-xs font-medium transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : activeNav === 'content-publishing' ? (
               <>
                 {/* Top Breadcrumb & Page Meta Area */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -331,8 +469,12 @@ export const ContentDashboard = () => {
       <ArticleDrawer
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
-        onUpdateItem={handleUpdateItem}
+        onSaveEdits={handleSaveEdits}
         onDeleteItem={handleDeleteItem}
+        onSubmitForApproval={handleSubmitForApproval}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        onPublish={handlePublish}
         onShowToast={showToast}
       />
 

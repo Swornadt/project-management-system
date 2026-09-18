@@ -11,33 +11,35 @@ import {
 import type { ContentItem } from '../../types';
 import { AUTHORS } from '../../data/mockContent';
 
+export interface NewContentPayload {
+  title: string;
+  slug: string;
+  body?: string;
+}
+
 interface NewContentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateItem: (item: ContentItem) => void;
+  onCreateItem: (payload: NewContentPayload) => Promise<void>;
 }
 
-export const NewContentModal: React.FC<NewContentModalProps> = ({
-  isOpen,
+interface NewContentModalContentProps {
+  onClose: () => void;
+  onCreateItem: (payload: NewContentPayload) => Promise<void>;
+}
+
+const NewContentModalContent: React.FC<NewContentModalContentProps> = ({
   onClose,
   onCreateItem,
 }) => {
-  if (!isOpen) return null;
-
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [project, setProject] = useState('core-cms');
   const [authorKey, setAuthorKey] = useState<keyof typeof AUTHORS>('eleanor');
-  const [version, setVersion] = useState('v1');
   const [icon, setIcon] = useState<ContentItem['icon']>('article');
   const [summary, setSummary] = useState('');
-
-  const projectMap: Record<string, string> = {
-    'core-cms': 'Enterprise Core CMS',
-    security: 'Security & Architecture',
-    mobile: 'Design System Mobile',
-    cloud: 'Cloud Infrastructure',
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleTitleChange = (val: string) => {
     setTitle(val);
@@ -59,51 +61,26 @@ export const NewContentModal: React.FC<NewContentModalProps> = ({
     setSlug(generatedSlug);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    let iconBg = 'bg-[#dcecfa]';
-    let iconColor = 'text-[#0075de]';
-    if (icon === 'shield') {
-      iconBg = 'bg-[#d9f3e1]';
-      iconColor = 'text-[#1aae39]';
-    } else if (icon === 'palette') {
-      iconBg = 'bg-[#fef7d6]';
-      iconColor = 'text-[#743300]';
-    } else if (icon === 'terminal') {
-      iconBg = 'bg-[#ffe8d4]';
-      iconColor = 'text-[#dd5b00]';
-    } else if (icon === 'verified') {
-      iconBg = 'bg-[#d9f3e1]';
-      iconColor = 'text-[#1aae39]';
-    } else if (icon === 'description') {
-      iconBg = 'bg-[#e6e0f5]';
-      iconColor = 'text-[#5645d4]';
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      await onCreateItem({
+        title: title.trim(),
+        slug: slug || `/docs/${title.toLowerCase().replace(/\s+/g, '-')}`,
+        body:
+          summary.trim() ||
+          `### ${title}\nInitial draft documentation initialized.`,
+      });
+      onClose();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Something went wrong — please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const newItem: ContentItem = {
-      id: `custom-${Date.now()}`,
-      title: title.trim(),
-      slug: slug || `/docs/${title.toLowerCase().replace(/\s+/g, '-')}`,
-      version: version.trim() || undefined,
-      project,
-      projectName: projectMap[project] || 'Enterprise Core CMS',
-      status: 'draft',
-      author: AUTHORS[authorKey] || AUTHORS.eleanor,
-      lastUpdated: 'Just now',
-      timestampHours: 0.01,
-      icon,
-      iconBg,
-      iconColor,
-      summary: summary.trim() || 'New enterprise documentation created in workspace.',
-      body: `### ${title}\n${summary || 'Initial draft documentation initialized.'}\n\n- Scope: ${projectMap[project]}\n- Author: ${AUTHORS[authorKey].name}`,
-      views: 1,
-      tags: [projectMap[project]],
-    };
-
-    onCreateItem(newItem);
-    onClose();
   };
 
   return (
@@ -188,18 +165,16 @@ export const NewContentModal: React.FC<NewContentModalProps> = ({
                 <option value="elena">Elena Rostova</option>
               </select>
             </div>
-
-            <div>
-              <label className="font-semibold text-[#5d5b54] block mb-1">Version Tag</label>
-              <input
-                type="text"
-                value={version}
-                onChange={(e) => setVersion(e.target.value)}
-                placeholder="v1"
-                className="w-full text-xs px-3 py-2 border border-[#e8e7e4] rounded-lg outline-none focus:border-[#5645d4]"
-              />
-            </div>
           </div>
+
+          {/* NOTE: Project and Author above are cosmetic for now. There's no
+              live Projects or Users API yet (see index.ts — both routers are
+              commented out), so real content always saves under the
+              placeholder project/author configured in ContentDashboard.
+              Swap this note out once those modules exist. */}
+          <p className="text-[11px] text-[#9b9a97] -mt-2">
+            Project and Author selection isn't wired to real data yet — new content saves under a placeholder project and author for now.
+          </p>
 
           <div>
             <label className="font-semibold text-[#5d5b54] block mb-1">Icon Category</label>
@@ -244,25 +219,41 @@ export const NewContentModal: React.FC<NewContentModalProps> = ({
             />
           </div>
 
+          {submitError && (
+            <p className="text-xs text-[#ba1a1a] bg-[#fde0e0] p-2 rounded-lg">{submitError}</p>
+          )}
+
           {/* Modal Footer Actions */}
           <div className="pt-3 border-t border-[#e8e7e4] flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-2 text-xs font-medium text-[#5d5b54] hover:bg-[#f0eeec] rounded-lg transition-colors"
+              disabled={isSubmitting}
+              className="px-3.5 py-2 text-xs font-medium text-[#5d5b54] hover:bg-[#f0eeec] rounded-lg transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={!title.trim()}
+              disabled={!title.trim() || isSubmitting}
               className="px-4 py-2 text-xs font-medium bg-[#5645d4] hover:bg-[#4534b3] text-white rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
             >
-              Create Publication
+              {isSubmitting ? 'Creating...' : 'Create Publication'}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+};
+
+// Gates on isOpen, then hands off to a component whose hooks always run
+// unconditionally — same fix as ArticleDrawer's wrapper, same reason.
+export const NewContentModal: React.FC<NewContentModalProps> = ({
+  isOpen,
+  onClose,
+  onCreateItem,
+}) => {
+  if (!isOpen) return null;
+  return <NewContentModalContent onClose={onClose} onCreateItem={onCreateItem} />;
 };

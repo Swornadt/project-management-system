@@ -12,20 +12,38 @@ import type { ContentItem } from '../../types';
 interface ArticleDrawerProps {
   item: ContentItem | null;
   onClose: () => void;
-  onUpdateItem: (updated: ContentItem) => void;
+  onSaveEdits: (id: string, edits: { title: string; summary: string; body: string }) => Promise<void>;
   onDeleteItem: (id: string) => void;
+  onSubmitForApproval: (id: string) => Promise<void>;
+  onApprove: (id: string) => Promise<void>;
+  onReject: (id: string, reason: string) => Promise<void>;
+  onPublish: (id: string) => Promise<void>;
   onShowToast: (title: string, subtitle?: string) => void;
 }
 
-export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
+interface ArticleDrawerContentProps {
+  item: ContentItem;
+  onClose: () => void;
+  onSaveEdits: (id: string, edits: { title: string; summary: string; body: string }) => Promise<void>;
+  onDeleteItem: (id: string) => void;
+  onSubmitForApproval: (id: string) => Promise<void>;
+  onApprove: (id: string) => Promise<void>;
+  onReject: (id: string, reason: string) => Promise<void>;
+  onPublish: (id: string) => Promise<void>;
+  onShowToast: (title: string, subtitle?: string) => void;
+}
+
+const ArticleDrawerContent: React.FC<ArticleDrawerContentProps> = ({
   item,
   onClose,
-  onUpdateItem,
+  onSaveEdits,
   onDeleteItem,
+  onSubmitForApproval,
+  onApprove,
+  onReject,
+  onPublish,
   onShowToast,
 }) => {
-  if (!item) return null;
-
   const [activeTab, setActiveTab] = useState<'content' | 'metadata' | 'history'>('content');
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(item.title);
@@ -36,56 +54,80 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
   );
   const [showRejectInput, setShowRejectInput] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [isActionPending, setIsActionPending] = useState(false);
 
   // Content can only be edited while it's a draft — every other status is
   // read-only until it moves through the workflow actions below.
   const canEdit = item.status === 'draft';
 
-  const handleSave = () => {
-    const updated: ContentItem = {
-      ...item,
-      title: editedTitle,
-      summary: editedSummary,
-      body: editedBody,
-      lastUpdated: 'Just now',
-      timestampHours: 0.1,
-    };
-    onUpdateItem(updated);
-    setIsEditing(false);
-    onShowToast('Changes Saved', `Updated "${editedTitle}"`);
+  const handleSave = async () => {
+    setIsActionPending(true);
+    try {
+      await onSaveEdits(item.id, { title: editedTitle, summary: editedSummary, body: editedBody });
+      setIsEditing(false);
+      onShowToast('Changes Saved', `Updated "${editedTitle}"`);
+    } catch (err) {
+      onShowToast('Save Failed', err instanceof Error ? err.message : 'Please try again');
+    } finally {
+      setIsActionPending(false);
+    }
   };
 
-  // Workflow actions — these mirror the backend's submit/decide/publish
+  // Workflow actions — these call the backend's real submit/decide/publish
   // endpoints (status only ever moves forward one step at a time; the only
   // way back to draft is a reviewer's rejection, with a reason attached).
+  // The updated item comes back from the API response, not a local guess.
   // TODO: once auth exists, gate Approve/Reject to reviewers only — the
   // author of the content should never see these controls on their own item.
-  const handleSubmitForApproval = () => {
-    onUpdateItem({ ...item, status: 'pending', lastUpdated: 'Just now' });
-    onShowToast('Submitted for Approval', `"${item.title}" is awaiting review`);
+  const handleSubmitForApproval = async () => {
+    setIsActionPending(true);
+    try {
+      await onSubmitForApproval(item.id);
+      onShowToast('Submitted for Approval', `"${item.title}" is awaiting review`);
+    } catch (err) {
+      onShowToast('Submit Failed', err instanceof Error ? err.message : 'Please try again');
+    } finally {
+      setIsActionPending(false);
+    }
   };
 
-  const handleApprove = () => {
-    onUpdateItem({ ...item, status: 'approved', lastUpdated: 'Just now' });
-    onShowToast('Approved', `"${item.title}" is ready to publish`);
+  const handleApprove = async () => {
+    setIsActionPending(true);
+    try {
+      await onApprove(item.id);
+      onShowToast('Approved', `"${item.title}" is ready to publish`);
+    } catch (err) {
+      onShowToast('Approve Failed', err instanceof Error ? err.message : 'Please try again');
+    } finally {
+      setIsActionPending(false);
+    }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!rejectReason.trim()) return;
-    onUpdateItem({
-      ...item,
-      status: 'draft',
-      rejectionReason: rejectReason.trim(),
-      lastUpdated: 'Just now',
-    });
-    onShowToast('Rejected', `"${item.title}" was sent back to draft`);
-    setShowRejectInput(false);
-    setRejectReason('');
+    setIsActionPending(true);
+    try {
+      await onReject(item.id, rejectReason.trim());
+      onShowToast('Rejected', `"${item.title}" was sent back to draft`);
+      setShowRejectInput(false);
+      setRejectReason('');
+    } catch (err) {
+      onShowToast('Reject Failed', err instanceof Error ? err.message : 'Please try again');
+    } finally {
+      setIsActionPending(false);
+    }
   };
 
-  const handlePublish = () => {
-    onUpdateItem({ ...item, status: 'published', lastUpdated: 'Just now' });
-    onShowToast('Published', `"${item.title}" is now live`);
+  const handlePublish = async () => {
+    setIsActionPending(true);
+    try {
+      await onPublish(item.id);
+      onShowToast('Published', `"${item.title}" is now live`);
+    } catch (err) {
+      onShowToast('Publish Failed', err instanceof Error ? err.message : 'Please try again');
+    } finally {
+      setIsActionPending(false);
+    }
   };
 
   const getStatusBadge = (status: ContentItem['status']) => {
@@ -155,10 +197,11 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
               <button
                 id="save-article-btn"
                 onClick={handleSave}
-                className="px-3 py-1 text-xs font-medium bg-[#5645d4] hover:bg-[#4534b3] text-white rounded-lg shadow-2xs transition-colors flex items-center gap-1"
+                disabled={isActionPending}
+                className="px-3 py-1 text-xs font-medium bg-[#5645d4] hover:bg-[#4534b3] text-white rounded-lg shadow-2xs transition-colors flex items-center gap-1 disabled:opacity-50"
               >
                 <Save className="w-3.5 h-3.5" />
-                <span>Save</span>
+                <span>{isActionPending ? 'Saving...' : 'Save'}</span>
               </button>
             )}
 
@@ -356,9 +399,10 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
                     {item.status === 'draft' && (
                       <button
                         onClick={handleSubmitForApproval}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#5645d4] text-white hover:bg-[#4534b3] transition-colors"
+                        disabled={isActionPending}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#5645d4] text-white hover:bg-[#4534b3] transition-colors disabled:opacity-50"
                       >
-                        Submit for Approval
+                        {isActionPending ? 'Submitting...' : 'Submit for Approval'}
                       </button>
                     )}
 
@@ -371,13 +415,15 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
                           <div className="flex items-center gap-2 flex-wrap">
                             <button
                               onClick={handleApprove}
-                              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#d9f3e1] text-[#1aae39] hover:bg-[#c2ebd0] transition-colors"
+                              disabled={isActionPending}
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#d9f3e1] text-[#1aae39] hover:bg-[#c2ebd0] transition-colors disabled:opacity-50"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => setShowRejectInput(true)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#fde0e0] text-[#ba1a1a] hover:bg-[#fbd0d0] transition-colors"
+                              disabled={isActionPending}
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#fde0e0] text-[#ba1a1a] hover:bg-[#fbd0d0] transition-colors disabled:opacity-50"
                             >
                               Reject
                             </button>
@@ -394,17 +440,18 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={handleReject}
-                                disabled={!rejectReason.trim()}
+                                disabled={!rejectReason.trim() || isActionPending}
                                 className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#ba1a1a] text-white hover:bg-[#a01616] transition-colors disabled:opacity-50"
                               >
-                                Confirm Rejection
+                                {isActionPending ? 'Rejecting...' : 'Confirm Rejection'}
                               </button>
                               <button
                                 onClick={() => {
                                   setShowRejectInput(false);
                                   setRejectReason('');
                                 }}
-                                className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#5d5b54] hover:bg-[#f0eeec] transition-colors"
+                                disabled={isActionPending}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#5d5b54] hover:bg-[#f0eeec] transition-colors disabled:opacity-50"
                               >
                                 Cancel
                               </button>
@@ -421,9 +468,10 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
                         </div>
                         <button
                           onClick={handlePublish}
-                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#e6e0f5] text-[#5645d4] hover:bg-[#d7d2ff] transition-colors"
+                          disabled={isActionPending}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#e6e0f5] text-[#5645d4] hover:bg-[#d7d2ff] transition-colors disabled:opacity-50"
                         >
-                          Publish
+                          {isActionPending ? 'Publishing...' : 'Publish'}
                         </button>
                       </div>
                     )}
@@ -533,4 +581,13 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
       </div>
     </div>
   );
+};
+
+// Gates on item being present, then hands off to a component that always
+// receives a real ContentItem — keeps every hook above unconditional, per
+// the Rules of Hooks (this early-return-before-hooks pattern was the
+// original bug; wrapping avoids it rather than routing around it).
+export const ArticleDrawer: React.FC<ArticleDrawerProps> = (props) => {
+  if (!props.item) return null;
+  return <ArticleDrawerContent {...props} item={props.item} />;
 };
