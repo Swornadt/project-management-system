@@ -29,18 +29,22 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
   const [activeTab, setActiveTab] = useState<'content' | 'metadata' | 'history'>('content');
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(item.title);
-  const [editedStatus, setEditedStatus] = useState(item.status);
   const [editedSummary, setEditedSummary] = useState(item.summary || '');
   const [editedBody, setEditedBody] = useState(
     item.body ||
       `### Executive Summary\n${item.summary || 'No detailed body specified yet.'}\n\n### Implementation Details\n- Automated pipeline integration\n- Multi-region validation\n- Governance approval verified`
   );
+  const [showRejectInput, setShowRejectInput] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+
+  // Content can only be edited while it's a draft — every other status is
+  // read-only until it moves through the workflow actions below.
+  const canEdit = item.status === 'draft';
 
   const handleSave = () => {
     const updated: ContentItem = {
       ...item,
       title: editedTitle,
-      status: editedStatus,
       summary: editedSummary,
       body: editedBody,
       lastUpdated: 'Just now',
@@ -51,15 +55,37 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
     onShowToast('Changes Saved', `Updated "${editedTitle}"`);
   };
 
-  const handleStatusQuickChange = (newStatus: ContentItem['status']) => {
-    const updated: ContentItem = {
+  // Workflow actions — these mirror the backend's submit/decide/publish
+  // endpoints (status only ever moves forward one step at a time; the only
+  // way back to draft is a reviewer's rejection, with a reason attached).
+  // TODO: once auth exists, gate Approve/Reject to reviewers only — the
+  // author of the content should never see these controls on their own item.
+  const handleSubmitForApproval = () => {
+    onUpdateItem({ ...item, status: 'pending', lastUpdated: 'Just now' });
+    onShowToast('Submitted for Approval', `"${item.title}" is awaiting review`);
+  };
+
+  const handleApprove = () => {
+    onUpdateItem({ ...item, status: 'approved', lastUpdated: 'Just now' });
+    onShowToast('Approved', `"${item.title}" is ready to publish`);
+  };
+
+  const handleReject = () => {
+    if (!rejectReason.trim()) return;
+    onUpdateItem({
       ...item,
-      status: newStatus,
+      status: 'draft',
+      rejectionReason: rejectReason.trim(),
       lastUpdated: 'Just now',
-    };
-    onUpdateItem(updated);
-    setEditedStatus(newStatus);
-    onShowToast('Status Updated', `Item is now ${newStatus.toUpperCase()}`);
+    });
+    onShowToast('Rejected', `"${item.title}" was sent back to draft`);
+    setShowRejectInput(false);
+    setRejectReason('');
+  };
+
+  const handlePublish = () => {
+    onUpdateItem({ ...item, status: 'published', lastUpdated: 'Just now' });
+    onShowToast('Published', `"${item.title}" is now live`);
   };
 
   const getStatusBadge = (status: ContentItem['status']) => {
@@ -104,7 +130,7 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
         {/* Top Header Bar */}
         <div className="p-4 border-b border-[#e8e7e4] flex items-center justify-between bg-[#fafaf9]">
           <div className="flex items-center gap-2">
-            {getStatusBadge(isEditing ? editedStatus : item.status)}
+            {getStatusBadge(item.status)}
             {item.version && (
               <span className="px-2 py-0.5 rounded text-xs bg-[#e4e9ec] text-[#5d5b54] font-medium">
                 {item.version}
@@ -115,14 +141,16 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
 
           <div className="flex items-center gap-1.5 text-[#5d5b54]">
             {!isEditing ? (
-              <button
-                id="edit-article-btn"
-                onClick={() => setIsEditing(true)}
-                className="px-2.5 py-1 text-xs font-medium bg-white hover:bg-[#f0eeec] border border-[#e8e7e4] rounded-lg transition-colors flex items-center gap-1 text-[#37352f]"
-              >
-                <FileEdit className="w-3.5 h-3.5" />
-                <span>Edit</span>
-              </button>
+              canEdit && (
+                <button
+                  id="edit-article-btn"
+                  onClick={() => setIsEditing(true)}
+                  className="px-2.5 py-1 text-xs font-medium bg-white hover:bg-[#f0eeec] border border-[#e8e7e4] rounded-lg transition-colors flex items-center gap-1 text-[#37352f]"
+                >
+                  <FileEdit className="w-3.5 h-3.5" />
+                  <span>Edit</span>
+                </button>
+              )
             ) : (
               <button
                 id="save-article-btn"
@@ -169,29 +197,14 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
                   className="w-full text-lg font-semibold text-[#37352f] p-2 border border-[#e8e7e4] rounded-lg mt-1 outline-none focus:border-[#5645d4]"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-[#9b9a97] uppercase">Workflow Status</label>
-                  <select
-                    value={editedStatus}
-                    onChange={(e) => setEditedStatus(e.target.value as ContentItem['status'])}
-                    className="w-full text-xs font-medium p-2 border border-[#e8e7e4] rounded-lg mt-1 bg-white"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="pending">Pending Approval</option>
-                    <option value="approved">Approved</option>
-                    <option value="published">Published</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#9b9a97] uppercase">URL Slug</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={item.slug}
-                    className="w-full text-xs p-2 border border-[#e8e7e4] rounded-lg mt-1 bg-[#f7f6f5] text-[#787671] font-mono"
-                  />
-                </div>
+              <div>
+                <label className="text-xs font-semibold text-[#9b9a97] uppercase">URL Slug</label>
+                <input
+                  type="text"
+                  disabled
+                  value={item.slug}
+                  className="w-full text-xs p-2 border border-[#e8e7e4] rounded-lg mt-1 bg-[#f7f6f5] text-[#787671] font-mono"
+                />
               </div>
             </div>
           ) : (
@@ -329,34 +342,97 @@ export const ArticleDrawer: React.FC<ArticleDrawerProps> = ({
                     </p>
                   </div>
 
-                  {/* Workflow Approval Action Buttons */}
+                  {/* Status banner + workflow actions — one action set per
+                      status, matching the backend's state machine. There is
+                      no free-form status picker: the only way to change
+                      status is through these actions. */}
                   <div className="mt-8 pt-4 border-t border-[#f1efed]">
-                    <div className="text-xs font-semibold text-[#9b9a97] uppercase tracking-wider mb-2">
-                      Quick Status Transition
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    {item.status === 'draft' && item.rejectionReason && (
+                      <div className="mb-3 p-3 rounded-lg bg-[#fde0e0] text-[#ba1a1a] text-xs">
+                        This was rejected: "{item.rejectionReason}"
+                      </div>
+                    )}
+
+                    {item.status === 'draft' && (
                       <button
-                        onClick={() => handleStatusQuickChange('approved')}
-                        disabled={item.status === 'approved'}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#d9f3e1] text-[#1aae39] hover:bg-[#c2ebd0] transition-colors disabled:opacity-50"
+                        onClick={handleSubmitForApproval}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#5645d4] text-white hover:bg-[#4534b3] transition-colors"
                       >
-                        Approve Publication
+                        Submit for Approval
                       </button>
-                      <button
-                        onClick={() => handleStatusQuickChange('published')}
-                        disabled={item.status === 'published'}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#e6e0f5] text-[#5645d4] hover:bg-[#d7d2ff] transition-colors disabled:opacity-50"
-                      >
-                        Publish to Production
-                      </button>
-                      <button
-                        onClick={() => handleStatusQuickChange('draft')}
-                        disabled={item.status === 'draft'}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#f0eeec] text-[#5d5b54] hover:bg-[#e4e9ec] transition-colors disabled:opacity-50"
-                      >
-                        Revert to Draft
-                      </button>
-                    </div>
+                    )}
+
+                    {item.status === 'pending' && (
+                      <div className="space-y-2">
+                        <div className="p-3 rounded-lg bg-[#ffe8d4] text-[#dd5b00] text-xs">
+                          Submitted for approval and awaiting review.
+                        </div>
+                        {!showRejectInput ? (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              onClick={handleApprove}
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#d9f3e1] text-[#1aae39] hover:bg-[#c2ebd0] transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => setShowRejectInput(true)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#fde0e0] text-[#ba1a1a] hover:bg-[#fbd0d0] transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <textarea
+                              rows={2}
+                              value={rejectReason}
+                              onChange={(e) => setRejectReason(e.target.value)}
+                              placeholder="Reason for rejection (required)"
+                              className="w-full p-2 border border-[#e8e7e4] rounded-lg text-xs outline-none focus:border-[#ba1a1a]"
+                            />
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={handleReject}
+                                disabled={!rejectReason.trim()}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#ba1a1a] text-white hover:bg-[#a01616] transition-colors disabled:opacity-50"
+                              >
+                                Confirm Rejection
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowRejectInput(false);
+                                  setRejectReason('');
+                                }}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#5d5b54] hover:bg-[#f0eeec] transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {item.status === 'approved' && (
+                      <div className="space-y-2">
+                        <div className="p-3 rounded-lg bg-[#d9f3e1] text-[#1aae39] text-xs">
+                          Approved — ready to publish.
+                        </div>
+                        <button
+                          onClick={handlePublish}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#e6e0f5] text-[#5645d4] hover:bg-[#d7d2ff] transition-colors"
+                        >
+                          Publish
+                        </button>
+                      </div>
+                    )}
+
+                    {item.status === 'published' && (
+                      <div className="p-3 rounded-lg bg-[#f0eeec] text-[#5d5b54] text-xs">
+                        Published{item.version ? ` · Version ${item.version}` : ''}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

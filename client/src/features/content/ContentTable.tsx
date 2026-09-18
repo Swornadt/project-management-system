@@ -21,7 +21,6 @@ interface ContentTableProps {
   onSelectItem: (item: ContentItem) => void;
   onResetFilters: () => void;
   onDeleteItem: (id: string) => void;
-  onChangeItemStatus: (id: string, newStatus: ContentItem['status']) => void;
   onShowToast: (title: string, subtitle?: string) => void;
 }
 
@@ -31,7 +30,6 @@ export const ContentTable: React.FC<ContentTableProps> = ({
   onSelectItem,
   onResetFilters,
   onDeleteItem,
-  onChangeItemStatus,
   onShowToast,
 }) => {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -279,30 +277,6 @@ export const ContentTable: React.FC<ContentTableProps> = ({
                         <Copy className="w-3.5 h-3.5 text-[#5d5b54]" />
                         <span>Copy URL Slug</span>
                       </button>
-
-                      <div className="my-1 border-t border-[#f1efed]"></div>
-                      <div className="px-2 py-0.5 text-[10px] font-semibold text-[#9b9a97] uppercase">
-                        Change Status
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-1 p-1">
-                        {(['draft', 'pending', 'approved', 'published'] as const).map((st) => (
-                          <button
-                            key={st}
-                            onClick={() => {
-                              onChangeItemStatus(item.id, st);
-                              setActiveMenuId(null);
-                            }}
-                            className={`px-1.5 py-1 rounded text-[10px] font-medium capitalize text-left transition-colors ${
-                              item.status === st
-                                ? 'bg-[#5645d4] text-white'
-                                : 'bg-[#f0eeec] text-[#5d5b54] hover:bg-[#dfe3e7]'
-                            }`}
-                          >
-                            {st}
-                          </button>
-                        ))}
-                      </div>
 
                       <div className="my-1 border-t border-[#f1efed]"></div>
 

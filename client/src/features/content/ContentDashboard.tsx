@@ -151,13 +151,6 @@ export const ContentDashboard = () => {
     showToast('Document Deleted', target ? `Removed "${target.title}"` : 'Publication removed');
   };
 
-  const handleChangeItemStatus = (id: string, newStatus: ContentItem['status']) => {
-    setAllItems((prev) =>
-      prev.map((it) => (it.id === id ? { ...it, status: newStatus, lastUpdated: 'Just now' } : it))
-    );
-    showToast('Status Updated', `Item moved to ${newStatus.toUpperCase()}`);
-  };
-
   const handleLoadMore = () => {
     setIsLoadingMore(true);
     setTimeout(() => {
@@ -277,7 +270,6 @@ export const ContentDashboard = () => {
                   onSelectItem={handleSelectItem}
                   onResetFilters={handleResetFilters}
                   onDeleteItem={handleDeleteItem}
-                  onChangeItemStatus={handleChangeItemStatus}
                   onShowToast={showToast}
                 />
 

@@ -32,6 +32,7 @@ export interface ContentItem {
   body?: string;
   views?: number;
   tags?: string[];
+  rejectionReason?: string;
 }
 
 export type ActiveNavKey =

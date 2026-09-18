@@ -27,7 +27,6 @@ export const NewContentModal: React.FC<NewContentModalProps> = ({
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [project, setProject] = useState('core-cms');
-  const [status, setStatus] = useState<ContentItem['status']>('draft');
   const [authorKey, setAuthorKey] = useState<keyof typeof AUTHORS>('eleanor');
   const [version, setVersion] = useState('v1');
   const [icon, setIcon] = useState<ContentItem['icon']>('article');
@@ -90,7 +89,7 @@ export const NewContentModal: React.FC<NewContentModalProps> = ({
       version: version.trim() || undefined,
       project,
       projectName: projectMap[project] || 'Enterprise Core CMS',
-      status,
+      status: 'draft',
       author: AUTHORS[authorKey] || AUTHORS.eleanor,
       lastUpdated: 'Just now',
       timestampHours: 0.01,
@@ -171,19 +170,6 @@ export const NewContentModal: React.FC<NewContentModalProps> = ({
               </select>
             </div>
 
-            <div>
-              <label className="font-semibold text-[#5d5b54] block mb-1">Initial Status</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as ContentItem['status'])}
-                className="w-full text-xs px-2.5 py-2 border border-[#e8e7e4] rounded-lg bg-white outline-none focus:border-[#5645d4]"
-              >
-                <option value="draft">Draft</option>
-                <option value="pending">Pending Approval</option>
-                <option value="approved">Approved</option>
-                <option value="published">Published</option>
-              </select>
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
