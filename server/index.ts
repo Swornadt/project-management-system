@@ -6,20 +6,7 @@ import { AppDataSource } from "./src/shared/db/data-source";
 import { errorHandler, notFoundHandler } from "./src/shared/middleware/error.middleware";
 
 import { authRouter } from "./src/features/authentication/auth.routes";
-// import { rolesRouter } from "./src/features/roles/roles.routes";
-// import { usersRouter } from "./src/features/users/users.routes";
-// import { projectsRouter } from "./src/features/projects/projects.routes";
-// import { projectMembersRouter } from "./src/features/project-members/project-members.routes";
-// import { contentsRouter } from "./src/features/contents/contents.routes";
-// import { tagsRouter } from "./src/features/tags/tags.routes";
-// import { contentTagsRouter } from "./src/features/content-tags/content-tags.routes";
-// import { tasksRouter } from "./src/features/tasks/tasks.routes";
-// import { taskCommentsRouter } from "./src/features/task-comments/task-comments.routes";
-// import { taskDependenciesRouter } from "./src/features/task-dependencies/task-dependencies.routes";
-// import { filesRouter } from "./src/features/files/files.routes";
-// import { projectFilesRouter } from "./src/features/project-files/project-files.routes";
-// import { notificationsRouter } from "./src/features/notifications/notifications.routes";
-// import { activityLogsRouter } from "./src/features/activity-logs/activity-logs.routes";
+import { usersRouter } from "./src/features/users/users.routes";
 
 dotenv.config();
 
@@ -35,20 +22,7 @@ app.get("/", (_req, res) => {
 });
 
 app.use(`${API_PREFIX}/auth`, authRouter);
-// app.use(`${API_PREFIX}/roles`, rolesRouter);
-// app.use(`${API_PREFIX}/users`, usersRouter);
-// app.use(`${API_PREFIX}/projects`, projectsRouter);
-// app.use(`${API_PREFIX}/project-members`, projectMembersRouter);
-// app.use(`${API_PREFIX}/contents`, contentsRouter);
-// app.use(`${API_PREFIX}/tags`, tagsRouter);
-// app.use(`${API_PREFIX}/content-tags`, contentTagsRouter);
-// app.use(`${API_PREFIX}/tasks`, tasksRouter);
-// app.use(`${API_PREFIX}/task-comments`, taskCommentsRouter);
-// app.use(`${API_PREFIX}/task-dependencies`, taskDependenciesRouter);
-// app.use(`${API_PREFIX}/files`, filesRouter);
-// app.use(`${API_PREFIX}/project-files`, projectFilesRouter);
-// app.use(`${API_PREFIX}/notifications`, notificationsRouter);
-// app.use(`${API_PREFIX}/activity-logs`, activityLogsRouter);
+app.use(`${API_PREFIX}/users`, usersRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
