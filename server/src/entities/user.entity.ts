@@ -41,6 +41,30 @@ export class User {
   @Column({ type: "varchar", length: 20, default: "active" })
   status!: string;
 
+  @Column({ type: "int", default: 0 })
+  failed_login_count!: number;
+
+  @Column({ type: "timestamp", nullable: true })
+  locked_until?: Date;
+
+  @Column({ type: "boolean", default: false })
+  email_verified!: boolean;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  verification_token?: string;
+
+  @Column({ type: "timestamp", nullable: true })
+  verification_token_expires?: Date;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  password_reset_token?: string;
+
+  @Column({ type: "timestamp", nullable: true })
+  password_reset_expires?: Date;
+
+  @Column({ type: "timestamp", nullable: true })
+  deleted_at?: Date;
+
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
 
