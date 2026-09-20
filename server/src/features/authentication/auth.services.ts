@@ -4,6 +4,9 @@ import type { LoginDto, RegisterDto, AuthResponse, MeResponse } from "./auth.dto
 import { HttpError } from "../../shared/middleware/error.middleware";
 
 export class AuthService {
+  register(body: RegisterDto) {
+    throw new Error("Method not implemented.");
+  }
   private issueToken(userId: string): string {
     return Buffer.from(`temporary:${userId}:${Date.now()}`, "utf-8").toString(
       "base64"

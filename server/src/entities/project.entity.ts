@@ -8,6 +8,7 @@ import {
   JoinColumn,
   OneToMany,
 } from "typeorm";
+
 import { User } from "./user.entity";
 import { ProjectMember } from "./project-member.entity";
 import { Content } from "./content.entity";
@@ -26,17 +27,31 @@ export class Project {
   @Column({ type: "varchar", length: 100 })
   name!: string;
 
-  @Column({ type: "text", nullable: true })
-  description?: string;
+  @Column({ type: "varchar", length: 20, unique: true })
+  key!: string;
 
-  @Column({ type: "varchar", length: 20, default: "active" })
+  @Column({ type: "text", nullable: true })
+  description?: string | undefined;
+
+  @Column({
+    type: "varchar",
+    length: 20,
+    default: "planned",
+  })
   status!: string;
 
-  @Column({ type: "date", nullable: true })
-  start_date?: Date;
+  @Column({
+    type: "varchar",
+    length: 20,
+    default: "medium",
+  })
+  priority!: string;
 
   @Column({ type: "date", nullable: true })
-  due_date?: Date;
+  start_date?: Date | undefined;  
+
+  @Column({ type: "date", nullable: true })
+  due_date?: Date | undefined;     
 
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
