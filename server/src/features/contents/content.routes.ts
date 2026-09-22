@@ -11,8 +11,11 @@ import {
   decideContentApproval,
   publishContent,
 } from "./content.controller";
+import { authenticate } from "../../shared/middleware/auth.middleware";
 
 export const contentsRouter = Router();
+
+contentsRouter.use(authenticate);
 
 contentsRouter.get("/", asyncHandler(findAllContent));
 contentsRouter.get("/:id", asyncHandler(findOneContent as any));
