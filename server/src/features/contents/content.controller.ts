@@ -8,6 +8,7 @@ import type {
 } from "./content.dto";
 import { contentService } from "./content.service";
 import { HttpError } from "../../shared/middleware/error.middleware";
+import { AuthRequest } from "../../shared/middleware/auth.middleware";
 
 export async function findAllContent(
   req: Request,
@@ -64,14 +65,16 @@ export async function createContent(
   res: Response<ApiResponse<ContentResponse>>,
   next: NextFunction
 ) {
-  const required = ["project_id", "author_id", "title", "slug"] as const;
+  const required = ["project_id", "title", "slug"] as const;
   for (const field of required) {
     if (!req.body[field]) {
       next(new HttpError(400, `Field '${field}' is required`));
       return;
     }
   }
-  const created = await contentService.create(req.body);
+  const authorId = (req as AuthRequest).user!.userId;
+  const created = await contentService.create({ ...req.body, author_id: authorId });
+
   const body: ApiResponse<ContentResponse> = {
     success: true,
     statusCode: 201,
@@ -142,7 +145,8 @@ export async function decideContentApproval(
   res: Response<ApiResponse<ContentResponse>>,
   next: NextFunction
 ) {
-  const { reviewer_id, decision, reason } = req.body;
+  const { decision, reason } = req.body;
+  const reviewer_id = (req as AuthRequest).user!.userId; 
   if (!reviewer_id || !decision) {
     next(new HttpError(400, "Fields 'reviewer_id' and 'decision' are required"));
     return;

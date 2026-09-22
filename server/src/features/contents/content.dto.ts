@@ -13,11 +13,9 @@ export interface ContentResponse {
 
 export interface CreateContentDto {
   project_id: string;
-  author_id: string;
   title: string;
   slug: string;
   body?: string;
-  status?: string;
 }
 
 export interface UpdateContentDto {
@@ -29,7 +27,6 @@ export interface UpdateContentDto {
 }
 
 export interface DecideApprovalDto {
-  reviewer_id: string;
   decision: "approved" | "rejected";
   reason?: string;
 }
