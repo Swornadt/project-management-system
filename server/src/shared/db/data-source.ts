@@ -6,6 +6,7 @@ dotenv.config();
 
 import { Role } from "../../entities/role.entity";
 import { User } from "../../entities/user.entity";
+import { RefreshToken } from "../../entities/refresh-token.entity";
 import { Project } from "../../entities/project.entity";
 import { ProjectMember } from "../../entities/project-member.entity";
 import { Content } from "../../entities/content.entity";
@@ -34,6 +35,7 @@ export const AppDataSource = new DataSource({
   entities: [
     Role,
     User,
+    RefreshToken,
     Project,
     ProjectMember,
     Content,

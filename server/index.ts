@@ -7,20 +7,7 @@ import { errorHandler, notFoundHandler } from "./src/shared/middleware/error.mid
 
 import { authRouter } from "./src/features/authentication/auth.routes";
 import { contentsRouter } from "./src/features/contents/content.routes";
-// import { rolesRouter } from "./src/features/roles/roles.routes";
-// import { usersRouter } from "./src/features/users/users.routes";
-// import { projectsRouter } from "./src/features/projects/projects.routes";
-// import { projectMembersRouter } from "./src/features/project-members/project-members.routes";
-// import { contentsRouter } from "./src/features/contents/contents.routes";
-// import { tagsRouter } from "./src/features/tags/tags.routes";
-// import { contentTagsRouter } from "./src/features/content-tags/content-tags.routes";
-// import { tasksRouter } from "./src/features/tasks/tasks.routes";
-// import { taskCommentsRouter } from "./src/features/task-comments/task-comments.routes";
-// import { taskDependenciesRouter } from "./src/features/task-dependencies/task-dependencies.routes";
-// import { filesRouter } from "./src/features/files/files.routes";
-// import { projectFilesRouter } from "./src/features/project-files/project-files.routes";
-// import { notificationsRouter } from "./src/features/notifications/notifications.routes";
-// import { activityLogsRouter } from "./src/features/activity-logs/activity-logs.routes";
+import { usersRouter } from "./src/features/users/users.routes";
 
 dotenv.config();
 
@@ -36,7 +23,6 @@ app.get("/", (_req, res) => {
 });
 
 app.use(`${API_PREFIX}/auth`, authRouter);
-app.use(`${API_PREFIX}/contents`, contentsRouter);
 // app.use(`${API_PREFIX}/roles`, rolesRouter);
 // app.use(`${API_PREFIX}/users`, usersRouter);
 // app.use(`${API_PREFIX}/projects`, projectsRouter);
