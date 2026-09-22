@@ -72,8 +72,8 @@ export async function createContent(
       return;
     }
   }
-  const authorId = (req as AuthRequest).user!.userId;
-  const created = await contentService.create({ ...req.body, author_id: authorId });
+  const author_id = (req as AuthRequest).user!.userId;
+  const created = await contentService.create({ ...req.body });
 
   const body: ApiResponse<ContentResponse> = {
     success: true,
