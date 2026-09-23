@@ -12,47 +12,87 @@ async function seed() {
     const roleRepo = AppDataSource.getRepository(Role);
     const userRepo = AppDataSource.getRepository(User);
 
-    const existingRoles = await roleRepo.count();
-    if (existingRoles === 0) {
-      const adminRole = roleRepo.create({
+    let adminRole = await roleRepo.findOne({
+      where: { name: "Admin" },
+    });
+
+    if (!adminRole) {
+      adminRole = roleRepo.create({
         name: "Admin",
-        description: "Full system access; users, roles, content and settings",
+        description:
+          "Full system access; users, roles, content and settings",
       });
-      const managerRole = roleRepo.create({
+
+      await roleRepo.save(adminRole);
+    }
+
+    let managerRole = await roleRepo.findOne({
+      where: { name: "Manager" },
+    });
+
+    if (!managerRole) {
+      managerRole = roleRepo.create({
         name: "Manager",
         description:
           "Manage/review assigned content and users according to permissions",
       });
-      const employeeRole = roleRepo.create({
+
+      await roleRepo.save(managerRole);
+    }
+
+    let employeeRole = await roleRepo.findOne({
+      where: { name: "Employee" },
+    });
+
+    if (!employeeRole) {
+      employeeRole = roleRepo.create({
         name: "Employee",
         description:
           "Create/update assigned content, upload files and submit for review",
       });
 
-      await roleRepo.save([adminRole, managerRole, employeeRole]);
-      console.log("Default roles seeded: Admin, Manager, Employee");
+      await roleRepo.save(employeeRole);
+    }
 
-      const existingUsers = await userRepo.count();
-      if (existingUsers === 0) {
-        const hashedPassword = await bcrypt.hash("admin123", 10);
-        const adminUser = userRepo.create({
-          role_id: adminRole.role_id,
-          first_name: "System",
-          last_name: "Administrator",
-          email: "admin@example.com",
-          password_hash: hashedPassword,
-          status: "active",
-        });
-        await userRepo.save(adminUser);
-        console.log(
-          "Default admin created: Email: admin@example.com, Password: admin123"
-        );
-      }
+    console.log("Default roles verified.");
+
+    let adminUser = await userRepo.findOne({
+      where: { email: "admin@example.com" },
+    });
+
+    const hashedPassword = await bcrypt.hash("Admin@123", 10);
+
+    if (!adminUser) {
+      adminUser = userRepo.create({
+        role_id: adminRole.role_id,
+        first_name: "System",
+        last_name: "Administrator",
+        email: "admin@example.com",
+        password_hash: hashedPassword,
+        status: "active",
+        email_verified: true,
+      });
+
+      await userRepo.save(adminUser);
+
+      console.log(
+        "Default admin created: Email: admin@example.com, Password: Admin@123"
+      );
     } else {
-      console.log("Roles already exist, skipping seed.");
+      adminUser.role_id = adminRole.role_id;
+      adminUser.password_hash = hashedPassword;
+      adminUser.status = "active";
+      adminUser.email_verified = true;
+
+      await userRepo.save(adminUser);
+
+      console.log(
+        "Existing admin updated: Email: admin@example.com, Password: Admin@123"
+      );
     }
 
     await AppDataSource.destroy();
+
     console.log("Seeding complete.");
     process.exit(0);
   } catch (error) {

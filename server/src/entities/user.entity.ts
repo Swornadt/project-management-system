@@ -8,6 +8,7 @@ import {
   JoinColumn,
   OneToMany,
 } from "typeorm";
+import { Exclude } from "class-transformer";
 import { Role } from "./role.entity";
 import { Project } from "./project.entity";
 import { ProjectMember } from "./project-member.entity";
@@ -35,33 +36,41 @@ export class User {
   @Column({ type: "varchar", length: 100, unique: true })
   email!: string;
 
+  @Exclude()
   @Column({ type: "varchar", length: 255 })
   password_hash!: string;
 
   @Column({ type: "varchar", length: 20, default: "active" })
   status!: string;
 
+  @Exclude()
   @Column({ type: "int", default: 0 })
   failed_login_count!: number;
 
+  @Exclude()
   @Column({ type: "timestamp", nullable: true })
   locked_until?: Date;
 
   @Column({ type: "boolean", default: false })
   email_verified!: boolean;
 
+  @Exclude()
   @Column({ type: "varchar", length: 255, nullable: true })
   verification_token?: string;
 
+  @Exclude()
   @Column({ type: "timestamp", nullable: true })
   verification_token_expires?: Date;
 
+  @Exclude()
   @Column({ type: "varchar", length: 255, nullable: true })
   password_reset_token?: string;
 
+  @Exclude()
   @Column({ type: "timestamp", nullable: true })
   password_reset_expires?: Date;
 
+  @Exclude()
   @Column({ type: "timestamp", nullable: true })
   deleted_at?: Date;
 

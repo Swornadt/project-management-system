@@ -48,19 +48,19 @@ export function rateLimit(options: RateLimitOptions) {
 
 export const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  maxAttempts: 5,
+  maxAttempts: 10,
   message: "Too many login attempts, please try again later",
 });
 
 export const passwordResetRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
-  maxAttempts: 3,
+  maxAttempts: 10,
   message: "Too many password reset requests, please try again later",
 });
 
 export const registrationRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
-  maxAttempts: 3,
+  maxAttempts: 10,
   message: "Too many registration attempts, please try again later",
 });
 
