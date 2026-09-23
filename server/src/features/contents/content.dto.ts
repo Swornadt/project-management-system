@@ -13,7 +13,7 @@ export interface ContentResponse {
 
 export interface CreateContentDto {
   project_id: string;
-  author_id: string;
+  author_id: string; // set by the controller from the auth token, not sent by the client
   title: string;
   slug: string;
   body?: string;

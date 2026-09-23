@@ -8,6 +8,7 @@ import { errorHandler, notFoundHandler } from "./src/shared/middleware/error.mid
 import { authRouter } from "./src/features/authentication/auth.routes";
 import { contentsRouter } from "./src/features/contents/content.routes";
 import { usersRouter } from "./src/features/users/users.routes";
+import { tagsRouter } from "./src/features/tags/tags.routes";
 
 dotenv.config();
 
@@ -23,13 +24,12 @@ app.get("/", (_req, res) => {
 });
 
 app.use(`${API_PREFIX}/auth`, authRouter);
+app.use(`${API_PREFIX}/users`, usersRouter);
+app.use(`${API_PREFIX}/contents`, contentsRouter);
+app.use(`${API_PREFIX}/tags`, tagsRouter);
 // app.use(`${API_PREFIX}/roles`, rolesRouter);
-// app.use(`${API_PREFIX}/users`, usersRouter);
 // app.use(`${API_PREFIX}/projects`, projectsRouter);
 // app.use(`${API_PREFIX}/project-members`, projectMembersRouter);
-// app.use(`${API_PREFIX}/contents`, contentsRouter);
-// app.use(`${API_PREFIX}/tags`, tagsRouter);
-// app.use(`${API_PREFIX}/content-tags`, contentTagsRouter);
 // app.use(`${API_PREFIX}/tasks`, tasksRouter);
 // app.use(`${API_PREFIX}/task-comments`, taskCommentsRouter);
 // app.use(`${API_PREFIX}/task-dependencies`, taskDependenciesRouter);
