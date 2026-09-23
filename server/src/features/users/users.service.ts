@@ -37,11 +37,17 @@ export class UsersService extends BaseCRUDService<User, CreateUserDto, UpdateUse
     return bcrypt.compare(password, hash);
   }
 
-  toResponse(user: User): Omit<User, "password_hash"> {
-    const { password_hash: _ph, ...rest } = user;
-    void _ph;
-    return rest;
-  }
+  toResponse(user: User) {
+  return {
+    user_id: user.user_id,
+    role_id: user.role_id,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+    status: user.status,
+    email_verified: user.email_verified,
+    created_at: user.created_at,
+    updated_at: user.updated_at,
+  };
 }
-
 export const usersService = new UsersService();
