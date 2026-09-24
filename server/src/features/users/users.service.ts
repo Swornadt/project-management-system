@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { IsNull, Not, ILike, In } from "typeorm";
+import { instanceToPlain } from "class-transformer";
 import { BaseCRUDService } from "../../shared/services/base.service";
 import { User } from "../../entities/user.entity";
 import { RefreshToken } from "../../entities/refresh-token.entity";
@@ -260,10 +261,10 @@ export class UsersService extends BaseCRUDService<User, CreateUserDto, UpdateUse
     return bcrypt.compare(password, hash);
   }
 
-  toResponse(user: User): Omit<User, "password_hash"> {
-    const { password_hash: _ph, ...rest } = user;
-    void _ph;
-    return rest;
+  toResponse(user: User): ReturnType<typeof instanceToPlain> {
+    return instanceToPlain(user, {
+      excludeExtraneousValues: false,
+    });
   }
 }
 
