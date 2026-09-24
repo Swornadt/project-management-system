@@ -35,7 +35,6 @@ export class ActivityLog {
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
 
-  // ✅ Removed inverse side (project.activity_logs doesn't exist)
   @ManyToOne(() => Project, {
     onDelete: "CASCADE",
     nullable: true,

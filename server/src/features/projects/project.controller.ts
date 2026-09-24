@@ -5,6 +5,8 @@ import {
   updateProjectSchema,
   projectQuerySchema,
   addProjectMemberSchema,
+  projectIdParamSchema,
+  projectMemberParamsSchema,
 } from "./project.dto";
 
 import { projectService } from "./project.service";
@@ -71,11 +73,7 @@ export const getProject = async (
 ) => {
   const { userId, roleName } = getAuthenticatedUser(req);
 
-  const projectId = req.params.projectId;
-
-  if (typeof projectId !== "string") {
-    throw new HttpError(400, "Invalid project ID");
-  }
+  const { projectId } = projectIdParamSchema.parse(req.params);
 
   const project = await projectService.getProject(
     projectId,
@@ -96,11 +94,7 @@ export const updateProject = async (
 ) => {
   const { userId, roleName } = getAuthenticatedUser(req);
 
-  const projectId = req.params.projectId;
-
-  if (typeof projectId !== "string") {
-    throw new HttpError(400, "Invalid project ID");
-  }
+  const { projectId } = projectIdParamSchema.parse(req.params);
 
   const data = updateProjectSchema.parse(req.body);
 
@@ -124,11 +118,7 @@ export const archiveProject = async (
 ) => {
   const { userId, roleName } = getAuthenticatedUser(req);
 
-  const projectId = req.params.projectId;
-
-  if (typeof projectId !== "string") {
-    throw new HttpError(400, "Invalid project ID");
-  }
+  const { projectId } = projectIdParamSchema.parse(req.params);
 
   const project = await projectService.archiveProject(
     projectId,
@@ -149,11 +139,7 @@ export const addProjectMember = async (
 ) => {
   const { userId, roleName } = getAuthenticatedUser(req);
 
-  const projectId = req.params.projectId;
-
-  if (typeof projectId !== "string") {
-    throw new HttpError(400, "Invalid project ID");
-  }
+  const { projectId } = projectIdParamSchema.parse(req.params);
 
   const data = addProjectMemberSchema.parse(req.body);
 
@@ -177,15 +163,8 @@ export const removeProjectMember = async (
 ) => {
   const { userId, roleName } = getAuthenticatedUser(req);
 
-  const projectId = req.params.projectId;
-  const memberUserId = req.params.userId;
-
-  if (
-    typeof projectId !== "string" ||
-    typeof memberUserId !== "string"
-  ) {
-    throw new HttpError(400, "Invalid project ID or user ID");
-  }
+  const { projectId, userId: memberUserId } =
+    projectMemberParamsSchema.parse(req.params);
 
   const result = await projectService.removeProjectMember(
     projectId,
@@ -207,11 +186,7 @@ export const getProjectDashboard = async (
 ) => {
   const { userId, roleName } = getAuthenticatedUser(req);
 
-  const projectId = req.params.projectId;
-
-  if (typeof projectId !== "string") {
-    throw new HttpError(400, "Invalid project ID");
-  }
+  const { projectId } = projectIdParamSchema.parse(req.params);
 
   const dashboard = await projectService.getProjectDashboard(
     projectId,
