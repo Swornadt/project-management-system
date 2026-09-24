@@ -16,6 +16,16 @@ export const axiosClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Attaches the JWT (set manually via localStorage for now, until real
+// auth/login exists — see the console command used to seed it in dev).
+axiosClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export interface ListParams {
   limit?: number;
   offset?: number;
