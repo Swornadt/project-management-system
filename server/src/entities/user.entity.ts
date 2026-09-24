@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  Index,
 } from "typeorm";
 import { Role } from "./role.entity";
 import { Project } from "./project.entity";
@@ -19,6 +20,10 @@ import { Notification } from "./notification.entity";
 import { ActivityLog } from "./activity-log.entity";
 
 @Entity("users")
+@Index(["status"])
+@Index(["email_verified"])
+@Index(["deleted_at"])
+@Index(["created_at"])
 export class User {
   @PrimaryGeneratedColumn("uuid")
   user_id!: string;
