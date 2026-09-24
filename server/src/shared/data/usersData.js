@@ -1,0 +1,35 @@
+export const users = [
+  {
+    user_id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+    role_id: "b1fec100-8d1c-5fg9-cc7e-7cc0ce491b22",
+    first_name: "Sworna",
+    last_name: "Tuladhar",
+    email: "sworna@gmail.com",
+    password_hash: "$2b$10$e835mK5/yG93Hl30W.xU1.e1A1/yG93Hl30W.xU1.e1A1yG93Hl30", // standard hashed password format
+    status: "active",
+    created_at: new Date("2026-01-15T08:30:00Z"),
+    updated_at: new Date("2026-01-15T08:30:00Z"),
+  },
+  {
+    user_id: "c2ffd211-0e2d-6gh0-dd8f-8dd1df502c33",
+    role_id: "b1fec100-8d1c-5fg9-cc7e-7cc0ce491b22",
+    first_name: "Aarav",
+    last_name: "Shrestha",
+    email: "aarav.shrestha@example.com",
+    password_hash: "$2b$10$e835mK5/yG93Hl30W.xU1.e1A1/yG93Hl30W.xU1.e1A1yG93Hl30",
+    status: "active",
+    created_at: new Date("2026-02-01T10:15:00Z"),
+    updated_at: new Date("2026-02-01T10:15:00Z"),
+  },
+  {
+    user_id: "d3gge322-1f3e-7hi1-ee9g-9ee2eg613d44",
+    role_id: "f3hag322-0f3e-7hi1-ee9g-9ee2eg613d44",
+    first_name: "Pooja",
+    last_name: "Karki",
+    email: "pooja.karki@example.com",
+    password_hash: "$2b$10$e835mK5/yG93Hl30W.xU1.e1A1/yG93Hl30W.xU1.e1A1yG93Hl30",
+    status: "inactive",
+    created_at: new Date("2026-02-10T14:20:00Z"),
+    updated_at: new Date("2026-02-12T09:00:00Z"),
+  },
+];
