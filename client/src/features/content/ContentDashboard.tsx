@@ -11,6 +11,7 @@ import { NewContentModal, type NewContentPayload } from './NewContentModal';
 import { QuickSearchModal } from './QuickSearchModal';
 import { Toast } from '../../components/layout/Toast';
 import { OtherViews } from './OtherViews';
+import { TaskBoard } from '../tasks/TaskBoard';
 import { contentApi } from '../../api/axiosClient';
 import {
   apiToContentItem,
@@ -323,6 +324,8 @@ export const ContentDashboard = () => {
                   Retry
                 </button>
               </div>
+            ) : activeNav === 'task-kanban-board' ? (
+              <TaskBoard />
             ) : activeNav === 'content-publishing' ? (
               <>
                 {/* Top Breadcrumb & Page Meta Area */}

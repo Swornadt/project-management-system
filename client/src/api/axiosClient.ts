@@ -64,3 +64,35 @@ export const contentApi = {
       .post<ApiResponse<ApiContentResponse>>(`/contents/${id}/publish`)
       .then((res) => res.data),
 };
+
+// --- Tasks ---
+import type { ApiTaskResponse, ApiCreateTaskDto, ApiUpdateTaskDto } from "./taskTypes";
+
+export const taskApi = {
+  listForProject: (projectId: string) =>
+    axiosClient
+      .get<ApiResponse<ApiTaskResponse[]>>(`/tasks/project/${projectId}`)
+      .then((res) => res.data),
+
+  getOne: (id: string) =>
+    axiosClient.get<ApiResponse<ApiTaskResponse>>(`/tasks/${id}`).then((res) => res.data),
+
+  create: (payload: ApiCreateTaskDto) =>
+    axiosClient.post<ApiResponse<ApiTaskResponse>>("/tasks", payload).then((res) => res.data),
+
+  update: (id: string, payload: ApiUpdateTaskDto) =>
+    axiosClient.patch<ApiResponse<ApiTaskResponse>>(`/tasks/${id}`, payload).then((res) => res.data),
+
+  updateStatus: (id: string, status: string) =>
+    axiosClient
+      .patch<ApiResponse<ApiTaskResponse>>(`/tasks/${id}/status`, { status })
+      .then((res) => res.data),
+
+  assign: (id: string, assigneeId: string | null) =>
+    axiosClient
+      .patch<ApiResponse<ApiTaskResponse>>(`/tasks/${id}/assign`, { assignee_id: assigneeId })
+      .then((res) => res.data),
+
+  remove: (id: string) =>
+    axiosClient.delete<ApiResponse<boolean>>(`/tasks/${id}`).then((res) => res.data),
+};
