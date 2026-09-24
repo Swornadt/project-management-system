@@ -35,13 +35,13 @@ export class ActivityLog {
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
 
-  @ManyToOne(() => Project, (project) => project.activity_logs, {
+  @ManyToOne(() => Project, {
     onDelete: "CASCADE",
+    nullable: true,
   })
   @JoinColumn({ name: "project_id" })
   project?: Project;
-
-  @ManyToOne(() => User, (user) => user.activity_logs, {
+  @ManyToOne(() => User, {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "user_id" })

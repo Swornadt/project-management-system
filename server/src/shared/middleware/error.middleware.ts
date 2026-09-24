@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
+import { ZodError } from "zod";
 import type { ApiResponse } from "../types";
 
 export class HttpError extends Error {
@@ -26,6 +27,20 @@ export function errorHandler(
   res: Response<ApiResponse<never>>,
   _next: NextFunction
 ) {
+  if (err instanceof ZodError) {
+    const body = {
+      success: false,
+      error: "Validation failed",
+      details: err.issues.map((e) => ({
+        path: e.path.join("."),
+        message: e.message,
+      })),
+      statusCode: 400,
+    } as unknown as ApiResponse<never>;
+
+    return res.status(400).json(body);
+  }
+
   let statusCode = 500;
   let message = "Internal server error";
 
