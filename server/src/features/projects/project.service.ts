@@ -30,10 +30,20 @@ const VALID_PRIORITIES = [
   "Critical",
 ] as const;
 
+// Mirrors server/src/features/tasks/tasks.service.ts's TASK_STATUSES —
+// keep these in sync (ideally import from there instead of duplicating,
+// to make this kind of drift impossible going forward). The old version of
+// this constant used "completed" as the terminal status and only knew
+// about 3 of the 7 real statuses, which silently broke task_counts,
+// progress %, and the overdue/upcoming-deadline queries below.
 const TASK_STATUS = {
+  BACKLOG: "backlog",
   TODO: "todo",
   IN_PROGRESS: "in_progress",
-  COMPLETED: "completed",
+  IN_REVIEW: "in_review",
+  BLOCKED: "blocked",
+  DONE: "done",
+  CANCELLED: "cancelled",
 } as const;
 
 const ALLOWED_SORT_FIELDS = [
@@ -628,9 +638,13 @@ class ProjectService {
 
     const [
       totalTasks,
-      completedTasks,
+      doneTasks,
       inProgressTasks,
       todoTasks,
+      backlogTasks,
+      inReviewTasks,
+      blockedTasks,
+      cancelledTasks,
     ] = await Promise.all([
       this.taskRepository.count({
         where: { project_id: projectId },
@@ -638,7 +652,7 @@ class ProjectService {
       this.taskRepository.count({
         where: {
           project_id: projectId,
-          status: TASK_STATUS.COMPLETED,
+          status: TASK_STATUS.DONE,
         },
       }),
       this.taskRepository.count({
@@ -653,20 +667,44 @@ class ProjectService {
           status: TASK_STATUS.TODO,
         },
       }),
+      this.taskRepository.count({
+        where: {
+          project_id: projectId,
+          status: TASK_STATUS.BACKLOG,
+        },
+      }),
+      this.taskRepository.count({
+        where: {
+          project_id: projectId,
+          status: TASK_STATUS.IN_REVIEW,
+        },
+      }),
+      this.taskRepository.count({
+        where: {
+          project_id: projectId,
+          status: TASK_STATUS.BLOCKED,
+        },
+      }),
+      this.taskRepository.count({
+        where: {
+          project_id: projectId,
+          status: TASK_STATUS.CANCELLED,
+        },
+      }),
     ]);
 
     const progress =
       totalTasks === 0
         ? 0
-        : Math.round((completedTasks / totalTasks) * 100);
+        : Math.round((doneTasks / totalTasks) * 100);
 
     const overdueTasks = await this.taskRepository
       .createQueryBuilder("task")
       .leftJoinAndSelect("task.assignee", "assignee")
       .where("task.project_id = :projectId", { projectId })
       .andWhere("task.due_date < :today", { today: todayStr })
-      .andWhere("task.status != :done", {
-        done: TASK_STATUS.COMPLETED,
+      .andWhere("task.status NOT IN (:...excludedStatuses)", {
+        excludedStatuses: [TASK_STATUS.DONE, TASK_STATUS.CANCELLED],
       })
       .orderBy("task.due_date", "ASC")
       .take(10)
@@ -680,8 +718,8 @@ class ProjectService {
         today: todayStr,
         soon: soonStr,
       })
-      .andWhere("task.status != :done", {
-        done: TASK_STATUS.COMPLETED,
+      .andWhere("task.status NOT IN (:...excludedStatuses)", {
+        excludedStatuses: [TASK_STATUS.DONE, TASK_STATUS.CANCELLED],
       })
       .orderBy("task.due_date", "ASC")
       .take(10)
@@ -723,9 +761,13 @@ class ProjectService {
       progress,
       task_counts: {
         total: totalTasks,
-        completed: completedTasks,
+        completed: doneTasks,
         in_progress: inProgressTasks,
         todo: todoTasks,
+        backlog: backlogTasks,
+        in_review: inReviewTasks,
+        blocked: blockedTasks,
+        cancelled: cancelledTasks,
       },
       overdue_tasks: overdueTasks,
       upcoming_deadlines: upcomingDeadlines,
