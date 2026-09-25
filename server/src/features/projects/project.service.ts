@@ -30,12 +30,6 @@ const VALID_PRIORITIES = [
   "Critical",
 ] as const;
 
-// Mirrors server/src/features/tasks/tasks.service.ts's TASK_STATUSES —
-// keep these in sync (ideally import from there instead of duplicating,
-// to make this kind of drift impossible going forward). The old version of
-// this constant used "completed" as the terminal status and only knew
-// about 3 of the 7 real statuses, which silently broke task_counts,
-// progress %, and the overdue/upcoming-deadline queries below.
 const TASK_STATUS = {
   BACKLOG: "backlog",
   TODO: "todo",
