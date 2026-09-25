@@ -42,6 +42,15 @@ export class Task {
   @Column({ type: "date", nullable: true })
   due_date?: Date;
 
+  @Column({ type: "numeric", precision: 6, scale: 2, nullable: true })
+  estimate_hours?: number;
+
+  @Column({ type: "text", array: true, default: () => "'{}'" })
+  labels!: string[];
+
+  @Column({ type: "uuid", nullable: true })
+  parent_task_id?: string;
+
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
 
@@ -53,6 +62,16 @@ export class Task {
   })
   @JoinColumn({ name: "project_id" })
   project!: Project;
+
+  @ManyToOne(() => Task, (task) => task.subtasks, {
+    onDelete: "CASCADE",
+    nullable: true,
+  })
+  @JoinColumn({ name: "parent_task_id" })
+  parent_task?: Task;
+
+  @OneToMany(() => Task, (task) => task.parent_task)
+  subtasks!: Task[];
 
   @ManyToOne(() => User, (user) => user.assigned_tasks, {
     onDelete: "SET NULL",
