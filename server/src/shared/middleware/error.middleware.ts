@@ -48,7 +48,47 @@ export function errorHandler(
     statusCode = err.statusCode;
     message = err.message;
   } else if (err instanceof Error) {
-    message = err.message;
+    const pgCode = (err as any).code;
+
+    if (pgCode === "22P02") {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid ID format",
+        statusCode: 400,
+      });
+    }
+
+    if (pgCode === "23505") {
+      return res.status(409).json({
+        success: false,
+        error: "Resource already exists",
+        statusCode: 409,
+      });
+    }
+
+    if (pgCode === "23503") {
+      return res.status(400).json({
+        success: false,
+        error: "Referenced resource does not exist",
+        statusCode: 400,
+      });
+    }
+
+    if (pgCode === "23502") {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required field",
+        statusCode: 400,
+      });
+    }
+
+    console.error("[errorHandler]", err);
+
+    if (process.env.NODE_ENV !== "production") {
+      message = err.message;
+    } else {
+      message = "Internal server error";
+    }
   }
 
   const body: ApiResponse<never> = {

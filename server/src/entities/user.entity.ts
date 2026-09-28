@@ -85,6 +85,13 @@ export class User {
   @UpdateDateColumn({ type: "timestamp" })
   updated_at!: Date;
 
+  @Column({ type: "uuid", nullable: true })
+  avatar_file_id?: string;
+
+  @ManyToOne(() => File, { onDelete: "SET NULL" })
+  @JoinColumn({ name: "avatar_file_id" })
+  avatar?: File;
+
   @ManyToOne(() => Role, (role) => role.users)
   @JoinColumn({ name: "role_id" })
   role!: Role;

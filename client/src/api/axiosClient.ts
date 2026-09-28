@@ -16,6 +16,16 @@ export const axiosClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Attaches the JWT (set manually via localStorage for now, until real
+// auth/login exists — see the console command used to seed it in dev).
+axiosClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export interface ListParams {
   limit?: number;
   offset?: number;
@@ -63,4 +73,36 @@ export const contentApi = {
     axiosClient
       .post<ApiResponse<ApiContentResponse>>(`/contents/${id}/publish`)
       .then((res) => res.data),
+};
+
+// --- Tasks ---
+import type { ApiTaskResponse, ApiCreateTaskDto, ApiUpdateTaskDto } from "./taskTypes";
+
+export const taskApi = {
+  listForProject: (projectId: string) =>
+    axiosClient
+      .get<ApiResponse<ApiTaskResponse[]>>(`/tasks/project/${projectId}`)
+      .then((res) => res.data),
+
+  getOne: (id: string) =>
+    axiosClient.get<ApiResponse<ApiTaskResponse>>(`/tasks/${id}`).then((res) => res.data),
+
+  create: (payload: ApiCreateTaskDto) =>
+    axiosClient.post<ApiResponse<ApiTaskResponse>>("/tasks", payload).then((res) => res.data),
+
+  update: (id: string, payload: ApiUpdateTaskDto) =>
+    axiosClient.patch<ApiResponse<ApiTaskResponse>>(`/tasks/${id}`, payload).then((res) => res.data),
+
+  updateStatus: (id: string, status: string) =>
+    axiosClient
+      .patch<ApiResponse<ApiTaskResponse>>(`/tasks/${id}/status`, { status })
+      .then((res) => res.data),
+
+  assign: (id: string, assigneeId: string | null) =>
+    axiosClient
+      .patch<ApiResponse<ApiTaskResponse>>(`/tasks/${id}/assign`, { assignee_id: assigneeId })
+      .then((res) => res.data),
+
+  remove: (id: string) =>
+    axiosClient.delete<ApiResponse<boolean>>(`/tasks/${id}`).then((res) => res.data),
 };
