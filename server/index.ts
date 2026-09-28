@@ -14,6 +14,7 @@ import { tagsRouter } from "./src/features/tags/tags.routes";
 import { tasksRouter } from "./src/features/tasks/tasks.routes";
 import { taskCommentsRouter } from "./src/features/task-comments/task-comments.routes";
 import { taskDependenciesRouter } from "./src/features/task-dependencies/task-dependencies.routes";
+import filesRoutes from "./src/features/files/files.routes";
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.use(`${API_PREFIX}/tags`, tagsRouter);
 app.use(`${API_PREFIX}/tasks`, tasksRouter);
 app.use(`${API_PREFIX}/task-comments`, taskCommentsRouter);
 app.use(`${API_PREFIX}/task-dependencies`, taskDependenciesRouter);
+app.use(`${API_PREFIX}/files`, filesRoutes);
 // app.use(`${API_PREFIX}/roles`, rolesRouter);
 // app.use(`${API_PREFIX}/projects`, projectsRouter);
 // app.use(`${API_PREFIX}/project-members`, projectMembersRouter);

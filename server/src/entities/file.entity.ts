@@ -7,9 +7,12 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  Index,
 } from "typeorm";
 import { User } from "./user.entity";
 import { ProjectFile } from "./project-file.entity";
+import { TaskFile } from "./task-file.entity";
+import { ContentFile } from "./content-file.entity";
 
 @Entity("files")
 export class File {
@@ -40,6 +43,10 @@ export class File {
   @UpdateDateColumn({ type: "timestamp" })
   updated_at!: Date;
 
+  @Index()
+  @Column({ type: "timestamp", nullable: true })
+  deleted_at?: Date;
+
   @ManyToOne(() => User, (user) => user.uploaded_files, {
     onDelete: "CASCADE",
   })
@@ -48,4 +55,10 @@ export class File {
 
   @OneToMany(() => ProjectFile, (pf) => pf.file)
   project_files!: ProjectFile[];
+
+  @OneToMany(() => TaskFile, (tf) => tf.file)
+  task_files!: TaskFile[];
+
+  @OneToMany(() => ContentFile, (cf) => cf.file)
+  content_files!: ContentFile[];
 }
