@@ -11,6 +11,7 @@ import {
 import { Project } from "./project.entity";
 import { User } from "./user.entity";
 import { ContentTag } from "./content-tag.entity";
+import { ContentFile } from "./content-file.entity";
 
 @Entity("contents")
 export class Content {
@@ -58,4 +59,7 @@ export class Content {
 
   @OneToMany(() => ContentTag, (ct) => ct.content)
   content_tags!: ContentTag[];
+
+  @OneToMany(() => ContentFile, (cf) => cf.content)
+  content_files!: ContentFile[];
 }

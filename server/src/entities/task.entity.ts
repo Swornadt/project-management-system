@@ -12,6 +12,7 @@ import { Project } from "./project.entity";
 import { User } from "./user.entity";
 import { TaskComment } from "./task-comment.entity";
 import { TaskDependency } from "./task-dependency.entity";
+import { TaskFile } from "./task-file.entity";
 
 @Entity("tasks")
 export class Task {
@@ -93,4 +94,7 @@ export class Task {
 
   @OneToMany(() => TaskDependency, (td) => td.depends_on_task)
   dependent_tasks!: TaskDependency[];
+
+  @OneToMany(() => TaskFile, (tf) => tf.task)
+  task_files!: TaskFile[];
 }
