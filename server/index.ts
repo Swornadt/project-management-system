@@ -14,6 +14,7 @@ import { tagsRouter } from "./src/features/tags/tags.routes";
 import { tasksRouter } from "./src/features/tasks/tasks.routes";
 import { taskCommentsRouter } from "./src/features/task-comments/task-comments.routes";
 import { taskDependenciesRouter } from "./src/features/task-dependencies/task-dependencies.routes";
+import { notificationsRouter } from "./src/features/notifications/notifications.routes";
 import filesRoutes from "./src/features/files/files.routes";
 
 dotenv.config();
@@ -49,7 +50,7 @@ app.use(`${API_PREFIX}/files`, filesRoutes);
 // app.use(`${API_PREFIX}/project-members`, projectMembersRouter);
 // app.use(`${API_PREFIX}/files`, filesRouter);
 // app.use(`${API_PREFIX}/project-files`, projectFilesRouter);
-// app.use(`${API_PREFIX}/notifications`, notificationsRouter);
+app.use(`${API_PREFIX}/notifications`, notificationsRouter);
 // app.use(`${API_PREFIX}/activity-logs`, activityLogsRouter);
 
 app.use(notFoundHandler);
