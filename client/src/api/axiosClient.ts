@@ -16,8 +16,8 @@ export const axiosClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Attaches the JWT (set manually via localStorage for now, until real
-// auth/login exists — see the console command used to seed it in dev).
+// Attaches the JWT (set via setAccessToken() on login, or manually via
+// localStorage for dev testing before a login screen existed).
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("accessToken");
   if (token) {
@@ -25,6 +25,14 @@ axiosClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+export function setAccessToken(token: string) {
+  localStorage.setItem("accessToken", token);
+}
+
+export function clearAccessToken() {
+  localStorage.removeItem("accessToken");
+}
 
 export interface ListParams {
   limit?: number;
@@ -106,3 +114,26 @@ export const taskApi = {
   remove: (id: string) =>
     axiosClient.delete<ApiResponse<boolean>>(`/tasks/${id}`).then((res) => res.data),
 };
+
+// --- Auth ---
+import type { ApiLoginDto, ApiAuthResponse, ApiUserProfile } from "./authTypes";
+
+export const authApi = {
+  login: (payload: ApiLoginDto) =>
+    axiosClient.post<ApiResponse<ApiAuthResponse>>("/auth/login", payload).then((res) => res.data),
+};
+
+const STORED_USER_KEY = "authUser";
+
+export function setStoredUser(user: ApiUserProfile) {
+  localStorage.setItem(STORED_USER_KEY, JSON.stringify(user));
+}
+
+export function getStoredUser(): ApiUserProfile | null {
+  const raw = localStorage.getItem(STORED_USER_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+export function clearStoredUser() {
+  localStorage.removeItem(STORED_USER_KEY);
+}
