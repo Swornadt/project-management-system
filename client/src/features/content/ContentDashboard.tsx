@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { SlidersHorizontal, Plus, ChevronDown, RefreshCw } from 'lucide-react';
 import { Sidebar } from '../../components/layout/Sidebar';
 import { Header } from '../../components/layout/Header';
@@ -13,6 +14,7 @@ import { Toast } from '../../components/layout/Toast';
 import { OtherViews } from './OtherViews';
 import { TaskBoard } from '../tasks/TaskBoard';
 import { contentApi } from '../../api/axiosClient';
+import { NAV_PATHS, resolveNavKey } from '../../routes/navPaths';
 import {
   apiToContentItem,
   contentItemToUpdateDto,
@@ -47,8 +49,16 @@ function extractErrorMessage(err: unknown): string {
 }
 
 export const ContentDashboard = () => {
-  // Navigation
-  const [activeNav, setActiveNav] = useState<ActiveNavKey>('content-publishing');
+  // Navigation — activeNav now comes from the URL (see App.tsx's
+  // "/:navKey" route) instead of local state, so each section has a real,
+  // bookmarkable/shareable address and the browser back/forward buttons
+  // work. setActiveNav is kept as a same-signature wrapper around
+  // navigate() specifically so every existing call site below (Sidebar,
+  // OtherViews, QuickSearchModal) needs zero changes.
+  const navigate = useNavigate();
+  const { navKey } = useParams<{ navKey: string }>();
+  const activeNav = resolveNavKey(navKey);
+  const setActiveNav = (nav: ActiveNavKey) => navigate(NAV_PATHS[nav]);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Content state
