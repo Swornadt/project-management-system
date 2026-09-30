@@ -16,6 +16,8 @@ import { taskCommentsRouter } from "./src/features/task-comments/task-comments.r
 import { taskDependenciesRouter } from "./src/features/task-dependencies/task-dependencies.routes";
 import { notificationsRouter } from "./src/features/notifications/notifications.routes";
 import filesRoutes from "./src/features/files/files.routes";
+import { approvalsRouter } from "./src/features/approvals/approvals.routes";
+import { startPublishScheduler } from "./src/shared/jobs/publish-scheduled.jobs";
 
 dotenv.config();
 
@@ -51,6 +53,7 @@ app.use(`${API_PREFIX}/files`, filesRoutes);
 // app.use(`${API_PREFIX}/files`, filesRouter);
 // app.use(`${API_PREFIX}/project-files`, projectFilesRouter);
 app.use(`${API_PREFIX}/notifications`, notificationsRouter);
+app.use(`${API_PREFIX}/approvals`, approvalsRouter);
 // app.use(`${API_PREFIX}/activity-logs`, activityLogsRouter);
 
 app.use(notFoundHandler);
@@ -61,6 +64,8 @@ async function startServer() {
     await AppDataSource.initialize();
     console.log("Database connected successfully.");
     console.log("Schema synchronized to database.");
+
+    startPublishScheduler();
 
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
