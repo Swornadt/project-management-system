@@ -12,6 +12,7 @@ import { Project } from "./project.entity";
 import { User } from "./user.entity";
 import { ContentTag } from "./content-tag.entity";
 import { ContentFile } from "./content-file.entity";
+import { ContentStatus } from "./approval.entity";
 
 @Entity("contents")
 export class Content {
@@ -33,11 +34,17 @@ export class Content {
   @Column({ type: "text", nullable: true })
   body?: string;
 
-  @Column({ type: "varchar", length: 20, default: "draft" })
-  status!: string;
+  @Column({ type: "varchar", length: 20, default: ContentStatus.DRAFT })
+  status!: ContentStatus;
 
   @Column({ type: "int", default: 1 })
   version!: number;
+
+  @Column({ type: "timestamp", nullable: true })
+  published_at?: Date | null;
+
+  @Column({ type: "timestamp", nullable: true })
+  scheduled_for?: Date | null;
 
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
