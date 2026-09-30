@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  CheckCircle2,
   ArrowRight,
   Sparkles,
 } from 'lucide-react';
@@ -59,11 +58,11 @@ export const OtherViews: React.FC<OtherViewsProps> = ({
             <span className="text-xs text-[#5d5b54]">Scheduled for next CDN cache release</span>
           </div>
           <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e8e7e4]">
-            <span className="text-xs text-[#9b9a97] uppercase font-semibold">SOC-2 Evidence Collector</span>
-            <div className="text-2xl font-semibold text-[#5645d4] mt-1">100% Passed</div>
-            <span className="text-xs text-[#1aae39] flex items-center gap-1 mt-0.5">
-              <CheckCircle2 className="w-3.5 h-3.5" /> All integrity checks clean
-            </span>
+            <span className="text-xs text-[#9b9a97] uppercase font-semibold">In Draft</span>
+            <div className="text-2xl font-semibold text-[#5d5b54] mt-1">
+              {items.filter((i) => i.status === 'draft').length}
+            </div>
+            <span className="text-xs text-[#5d5b54]">Not yet submitted for review</span>
           </div>
         </div>
 
@@ -137,8 +136,11 @@ export const OtherViews: React.FC<OtherViewsProps> = ({
           <span>Active Operations Pulse</span>
         </div>
         <p className="text-xs text-[#5d5b54] max-w-xl leading-relaxed">
-          Acme Global Operations is synchronizing 28 publications across 4 core engineering domains.
-          Content releases are staged across Enterprise Core CMS, Security &amp; Architecture, Design System Mobile, and Cloud Infrastructure.
+          {items.length} content item{items.length === 1 ? '' : 's'} tracked across{' '}
+          {new Set(items.map((i) => i.projectName)).size} project
+          {new Set(items.map((i) => i.projectName)).size === 1 ? '' : 's'} —{' '}
+          {items.filter((i) => i.status === 'published').length} published,{' '}
+          {items.filter((i) => i.status === 'pending').length} awaiting review.
         </p>
 
         <div className="pt-2 flex items-center gap-3">

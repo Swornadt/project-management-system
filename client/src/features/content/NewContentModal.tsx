@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   X,
   FilePlus,
@@ -8,6 +8,8 @@ import {
   Terminal,
   CheckCircle2,
 } from 'lucide-react';
+import { projectApi } from '../../api/axiosClient';
+import type { ApiProjectResponse } from '../../api/types';
 import type { ContentItem } from '../../types';
 import { AUTHORS } from '../../data/mockContent';
 
@@ -15,6 +17,7 @@ export interface NewContentPayload {
   title: string;
   slug: string;
   body?: string;
+  projectId?: string;
 }
 
 interface NewContentModalProps {
@@ -28,37 +31,88 @@ interface NewContentModalContentProps {
   onCreateItem: (payload: NewContentPayload) => Promise<void>;
 }
 
+const generateSlug = (
+  titleValue: string,
+  activeProject: string,
+  projectLookup: ApiProjectResponse[]
+) => {
+  const selectedProject = projectLookup.find((item) => item.project_id === activeProject);
+  const projectSlugSegment =
+    (selectedProject?.key_code ?? selectedProject?.name ?? 'project')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'project';
+
+  return (
+    '/' +
+    projectSlugSegment +
+    '/' +
+    titleValue
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+  );
+};
+
 const NewContentModalContent: React.FC<NewContentModalContentProps> = ({
   onClose,
   onCreateItem,
 }) => {
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
-  const [project, setProject] = useState('core-cms');
+  const [project, setProject] = useState('');
+  const [projectOptions, setProjectOptions] = useState<ApiProjectResponse[]>([]);
   const [authorKey, setAuthorKey] = useState<keyof typeof AUTHORS>('eleanor');
   const [icon, setIcon] = useState<ContentItem['icon']>('article');
   const [summary, setSummary] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    projectApi
+      .list({ per_page: 100 })
+      .then((res) => {
+        if (cancelled) return;
+        const projects = res.data ?? [];
+        setProjectOptions(projects);
+        if (projects.length === 0) {
+          setProject('');
+          return;
+        }
+
+        setProject((currentProject) => {
+          if (currentProject && projects.some((item) => item.project_id === currentProject)) {
+            return currentProject;
+          }
+          return projects[0].project_id;
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setProjectOptions([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!title.trim()) return;
+    setSlug((currentSlug) => {
+      const generatedSlug = generateSlug(title, project, projectOptions);
+      if (!currentSlug || currentSlug === generatedSlug || currentSlug.startsWith('/')) {
+        return generatedSlug;
+      }
+      return currentSlug;
+    });
+  }, [title, project, projectOptions]);
+
   const handleTitleChange = (val: string) => {
     setTitle(val);
-    const generatedSlug =
-      '/' +
-      (project === 'core-cms'
-        ? 'announcements'
-        : project === 'security'
-        ? 'security'
-        : project === 'mobile'
-        ? 'design'
-        : 'infrastructure') +
-      '/' +
-      val
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .trim()
-        .replace(/\s+/g, '-');
-    setSlug(generatedSlug);
+    setSlug(generateSlug(val, project, projectOptions));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,6 +128,7 @@ const NewContentModalContent: React.FC<NewContentModalContentProps> = ({
         body:
           summary.trim() ||
           `### ${title}\nInitial draft documentation initialized.`,
+        projectId: project || undefined,
       });
       onClose();
     } catch (err) {
@@ -138,12 +193,18 @@ const NewContentModalContent: React.FC<NewContentModalContentProps> = ({
               <select
                 value={project}
                 onChange={(e) => setProject(e.target.value)}
-                className="w-full text-xs px-2.5 py-2 border border-[#e8e7e4] rounded-lg bg-white outline-none focus:border-[#5645d4]"
+                disabled={projectOptions.length === 0}
+                className="w-full text-xs px-2.5 py-2 border border-[#e8e7e4] rounded-lg bg-white outline-none focus:border-[#5645d4] disabled:bg-[#f6f5f4] disabled:text-[#9b9a97]"
               >
-                <option value="core-cms">Enterprise Core CMS</option>
-                <option value="security">Security &amp; Architecture</option>
-                <option value="mobile">Design System Mobile</option>
-                <option value="cloud">Cloud Infrastructure</option>
+                {projectOptions.length === 0 ? (
+                  <option value="">No projects available</option>
+                ) : (
+                  projectOptions.map((item) => (
+                    <option key={item.project_id} value={item.project_id}>
+                      {item.name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
@@ -167,13 +228,8 @@ const NewContentModalContent: React.FC<NewContentModalContentProps> = ({
             </div>
           </div>
 
-          {/* NOTE: Project and Author above are cosmetic for now. There's no
-              live Projects or Users API yet (see index.ts — both routers are
-              commented out), so real content always saves under the
-              placeholder project/author configured in ContentDashboard.
-              Swap this note out once those modules exist. */}
           <p className="text-[11px] text-[#9b9a97] -mt-2">
-            Project and Author selection isn't wired to real data yet — new content saves under a placeholder project and author for now.
+            Project selection is pulling from the live backend; authors remain a UI-only default until the user directory is available.
           </p>
 
           <div>
