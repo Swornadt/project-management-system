@@ -23,7 +23,7 @@ export class Task {
   project_id!: string;
 
   @Column({ type: "uuid", nullable: true })
-  assignee_id?: string;
+  assignee_id?: string | null;
 
   @Column({ type: "uuid" })
   created_by!: string;
@@ -32,7 +32,7 @@ export class Task {
   title!: string;
 
   @Column({ type: "text", nullable: true })
-  description?: string;
+  description?: string | null;
 
   @Column({ type: "varchar", length: 20, default: "todo" })
   status!: string;
@@ -41,16 +41,16 @@ export class Task {
   priority!: string;
 
   @Column({ type: "date", nullable: true })
-  due_date?: Date;
+  due_date?: Date | null;
 
   @Column({ type: "numeric", precision: 6, scale: 2, nullable: true })
-  estimate_hours?: number;
+  estimate_hours?: number | null;
 
   @Column({ type: "text", array: true, default: () => "'{}'" })
   labels!: string[];
 
   @Column({ type: "uuid", nullable: true })
-  parent_task_id?: string;
+  parent_task_id?: string | null;
 
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
@@ -69,16 +69,17 @@ export class Task {
     nullable: true,
   })
   @JoinColumn({ name: "parent_task_id" })
-  parent_task?: Task;
+  parent_task?: Task | null;
 
   @OneToMany(() => Task, (task) => task.parent_task)
   subtasks!: Task[];
 
   @ManyToOne(() => User, (user) => user.assigned_tasks, {
     onDelete: "SET NULL",
+    nullable: true,
   })
   @JoinColumn({ name: "assignee_id" })
-  assignee?: User;
+  assignee?: User | null;
 
   @ManyToOne(() => User, (user) => user.created_tasks, {
     onDelete: "CASCADE",

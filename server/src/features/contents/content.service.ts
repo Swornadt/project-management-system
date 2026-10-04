@@ -1,11 +1,19 @@
 import { BaseCRUDService } from "../../shared/services/base.service";
 import { getRepo } from "../../shared/db/repositories";
 import { Content } from "../../entities/content.entity";
-import { Approval } from "../../entities/approval.entity";
+import {
+  Approval,
+  ApprovalStatus,
+  ContentStatus,
+} from "../../entities/approval.entity";
 import { HttpError } from "../../shared/middleware/error.middleware";
 import type { CreateContentDto, UpdateContentDto } from "./content.dto";
 
-export class ContentService extends BaseCRUDService<Content, CreateContentDto, UpdateContentDto> {
+export class ContentService extends BaseCRUDService<
+  Content,
+  CreateContentDto,
+  UpdateContentDto
+> {
   constructor() {
     super(Content, "content_id");
   }
@@ -13,10 +21,12 @@ export class ContentService extends BaseCRUDService<Content, CreateContentDto, U
   async submitForApproval(id: string): Promise<Content> {
     const content = await this.findOne(id);
     if (!content) throw new HttpError(404, "Content not found");
-    if (content.status !== "draft") {
+    if (content.status !== ContentStatus.DRAFT) {
       throw new HttpError(409, `Cannot submit content from status '${content.status}'`);
     }
-    const merged = this.repo().merge(content, { status: "pending_approval" });
+    const merged = this.repo().merge(content, {
+      status: ContentStatus.PENDING_APPROVAL,
+    });
     return this.repo().save(merged);
   }
 
@@ -28,7 +38,7 @@ export class ContentService extends BaseCRUDService<Content, CreateContentDto, U
   ): Promise<Content> {
     const content = await this.findOne(id);
     if (!content) throw new HttpError(404, "Content not found");
-    if (content.status !== "pending_approval") {
+    if (content.status !== ContentStatus.PENDING_APPROVAL) {
       throw new HttpError(409, `Cannot decide content from status '${content.status}'`);
     }
     if (reviewerId === content.author_id) {
@@ -42,13 +52,14 @@ export class ContentService extends BaseCRUDService<Content, CreateContentDto, U
     const approval = approvalRepo.create({
       content_id: content.content_id,
       reviewer_id: reviewerId,
-      status: decision,
+      status: decision as unknown as ApprovalStatus,
       reason: reason ?? null,
       decided_at: new Date(),
     });
     await approvalRepo.save(approval);
 
-    const nextStatus = decision === "approved" ? "approved" : "draft";
+    const nextStatus =
+      decision === "approved" ? ContentStatus.APPROVED : ContentStatus.DRAFT;
     const merged = this.repo().merge(content, { status: nextStatus });
     return this.repo().save(merged);
   }
@@ -56,11 +67,11 @@ export class ContentService extends BaseCRUDService<Content, CreateContentDto, U
   async publish(id: string): Promise<Content> {
     const content = await this.findOne(id);
     if (!content) throw new HttpError(404, "Content not found");
-    if (content.status !== "approved") {
+    if (content.status !== ContentStatus.APPROVED) {
       throw new HttpError(409, `Cannot publish content from status '${content.status}'`);
     }
     const merged = this.repo().merge(content, {
-      status: "published",
+      status: ContentStatus.PUBLISHED,
       version: content.version + 1,
     });
     return this.repo().save(merged);

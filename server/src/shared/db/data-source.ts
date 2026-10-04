@@ -20,8 +20,8 @@ import { ProjectFile } from "../../entities/project-file.entity";
 import { Notification } from "../../entities/notification.entity";
 import { ActivityLog } from "../../entities/activity-log.entity";
 import { Approval } from "../../entities/approval.entity";
-import { TaskFile } from "../../entities/task-file.entity";      
-import { ContentFile } from "../../entities/content-file.entity"; 
+import { TaskFile } from "../../entities/task-file.entity";
+import { ContentFile } from "../../entities/content-file.entity";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -51,9 +51,11 @@ export const AppDataSource = new DataSource({
     Notification,
     ActivityLog,
     Approval,
-    TaskFile,     
-    ContentFile,  
+    TaskFile,
+    ContentFile,
   ],
-  synchronize: true,
+  migrations: ["src/migrations/*.ts"],
+  migrationsTableName: "typeorm_migrations",
+  synchronize: false,  
   logging: true,
 });

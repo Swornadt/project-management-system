@@ -11,8 +11,6 @@ import type {
 } from "./tasks.dto";
 import type { PaginatedResponse, PaginationParams, SortParams } from "../../shared/types";
 
-// Statuses per SRS §5.5. Backlog/Todo are both "not started" buckets that
-// teams use differently, so both are valid entry points.
 export const TASK_STATUSES = [
   "backlog",
   "todo",
@@ -27,16 +25,13 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 export const TASK_PRIORITIES = ["low", "medium", "high", "urgent"] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
-// Allowed status transitions per SRS §11.2 ("Status transitions should be
-// validated by backend rules"). Keyed by current status -> set of statuses
-// it may move to next.
 const STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   backlog: ["todo", "in_progress", "cancelled"],
   todo: ["in_progress", "backlog", "cancelled"],
   in_progress: ["in_review", "blocked", "todo", "cancelled"],
   in_review: ["done", "in_progress", "blocked"],
   blocked: ["in_progress", "cancelled"],
-  done: ["in_progress"], // reopening a task is allowed
+  done: ["in_progress"],
   cancelled: [],
 };
 
@@ -47,7 +42,13 @@ export class TaskService extends BaseCRUDService<Task, CreateTaskDto, UpdateTask
 
   async findAllForProject(
     projectId: string,
-    filters: TaskFilterDto = {},
+    filters: TaskFilterDto = {
+      status: undefined,
+      priority: undefined,
+      assignee_id: undefined,
+      label: undefined,
+      overdue: undefined,
+    },
     pagination: PaginationParams = {},
     sort: SortParams = {}
   ): Promise<PaginatedResponse<Task>> {
@@ -124,11 +125,12 @@ export class TaskService extends BaseCRUDService<Task, CreateTaskDto, UpdateTask
     const task = await this.findOne(id);
     if (!task) throw new HttpError(404, "Task not found");
 
-    // Admin/Manager can update any task; an Employee may only update the
-    // status of a task assigned to them (SRS §5.2 role permission model).
     const isPrivileged = actingUserRole === "Admin" || actingUserRole === "Manager";
     if (!isPrivileged && task.assignee_id !== actingUserId) {
-      throw new HttpError(403, "You can only update the status of tasks assigned to you");
+      throw new HttpError(
+        403,
+        "You can only update the status of tasks assigned to you"
+      );
     }
 
     const current = task.status as TaskStatus;
@@ -164,8 +166,6 @@ export class TaskService extends BaseCRUDService<Task, CreateTaskDto, UpdateTask
     const task = await this.findOne(id);
     if (!task) throw new HttpError(404, "Task not found");
 
-    // Use a raw update (rather than merge) so an explicit `null` clears the
-    // column instead of merge treating `undefined` as "leave unchanged".
     await this.repo().update({ task_id: id } as any, { assignee_id: assigneeId } as any);
     const saved = await this.findOne(id);
     if (!saved) throw new HttpError(404, "Task not found");

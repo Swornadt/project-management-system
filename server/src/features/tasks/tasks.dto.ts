@@ -18,7 +18,7 @@ export interface TaskResponse {
 
 export interface CreateTaskDto {
   project_id: string;
-  created_by: string; // set by the controller from the auth token, not sent by the client
+  created_by: string;
   title: string;
   description?: string;
   status?: string;
@@ -49,9 +49,9 @@ export interface AssignTaskDto {
 }
 
 export interface TaskFilterDto {
-  status?: string;
-  priority?: string;
-  assignee_id?: string;
-  label?: string;
-  overdue?: boolean;
+  status: string | undefined;
+  priority: string | undefined;
+  assignee_id: string | undefined;
+  label: string | undefined;
+  overdue: boolean | undefined;
 }

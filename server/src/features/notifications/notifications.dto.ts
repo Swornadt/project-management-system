@@ -9,8 +9,8 @@ export interface NotificationResponse {
 }
 
 export interface NotificationQueryDto {
-  is_read?: boolean;
-  type?: string;
-  limit?: number;
-  offset?: number;
+  is_read: boolean | undefined;
+  type: string | undefined;
+  limit: number | undefined;
+  offset: number | undefined;
 }
