@@ -36,19 +36,42 @@ const TASK_STATUS = {
   COMPLETED: "completed",
 } as const;
 
+const ALLOWED_SORT_FIELDS = [
+  "created_at",
+  "updated_at",
+  "name",
+  "key_code",
+  "status",
+  "priority",
+  "start_date",
+  "due_date",
+] as const;
+
 class ProjectService {
-  private projectRepository = AppDataSource.getRepository(Project);
-  private projectMemberRepository =
-    AppDataSource.getRepository(ProjectMember);
-  private userRepository = AppDataSource.getRepository(User);
-  private taskRepository = AppDataSource.getRepository(Task);
-  private fileRepository = AppDataSource.getRepository(File);
-  private projectFileRepository =
-    AppDataSource.getRepository(ProjectFile);
-  private activityLogRepository =
-    AppDataSource.getRepository(ActivityLog);
-  private notificationRepository =
-    AppDataSource.getRepository(Notification);
+  private get projectRepository() {
+    return AppDataSource.getRepository(Project);
+  }
+  private get projectMemberRepository() {
+    return AppDataSource.getRepository(ProjectMember);
+  }
+  private get userRepository() {
+    return AppDataSource.getRepository(User);
+  }
+  private get taskRepository() {
+    return AppDataSource.getRepository(Task);
+  }
+  private get fileRepository() {
+    return AppDataSource.getRepository(File);
+  }
+  private get projectFileRepository() {
+    return AppDataSource.getRepository(ProjectFile);
+  }
+  private get activityLogRepository() {
+    return AppDataSource.getRepository(ActivityLog);
+  }
+  private get notificationRepository() {
+    return AppDataSource.getRepository(Notification);
+  }
 
   private isAdmin(role: string) {
     return role.toLowerCase() === "admin";
@@ -74,6 +97,14 @@ class ProjectService {
         `Invalid priority. Allowed: ${VALID_PRIORITIES.join(", ")}`
       );
     }
+  }
+
+  private toDateString(d: Date | string | undefined): string | undefined {
+    if (!d) return undefined;
+    const date = d instanceof Date ? d : new Date(d);
+    return isNaN(date.getTime())
+      ? undefined
+      : date.toISOString().split("T")[0];
   }
 
   private async hasProjectAccess(
@@ -223,6 +254,7 @@ class ProjectService {
       end_from,
       end_to,
       include_archived,
+      sort,
     } = query;
 
     const qb = this.projectRepository
@@ -270,22 +302,22 @@ class ProjectService {
     }
     if (start_from) {
       qb.andWhere("project.start_date >= :startFrom", {
-        startFrom: start_from,
+        startFrom: this.toDateString(start_from),
       });
     }
     if (start_to) {
       qb.andWhere("project.start_date <= :startTo", {
-        startTo: start_to,
+        startTo: this.toDateString(start_to),
       });
     }
     if (end_from) {
       qb.andWhere("project.due_date >= :endFrom", {
-        endFrom: end_from,
+        endFrom: this.toDateString(end_from),
       });
     }
     if (end_to) {
       qb.andWhere("project.due_date <= :endTo", {
-        endTo: end_to,
+        endTo: this.toDateString(end_to),
       });
     }
     if (include_archived !== "true") {
@@ -294,8 +326,22 @@ class ProjectService {
       });
     }
 
+    const rawSort = sort ?? "-created_at";
+    const sortDir = rawSort.startsWith("-") ? "DESC" : "ASC";
+    const sortField = rawSort.startsWith("-")
+      ? rawSort.slice(1)
+      : rawSort;
+
+    if (
+      (ALLOWED_SORT_FIELDS as readonly string[]).includes(sortField)
+    ) {
+      qb.orderBy(`project.${sortField}`, sortDir as "ASC" | "DESC");
+    } else {
+      qb.orderBy("project.created_at", "DESC");
+    }
+
     const skip = (page - 1) * per_page;
-    qb.orderBy("project.created_at", "DESC").skip(skip).take(per_page);
+    qb.skip(skip).take(per_page);
 
     const [projects, total] = await qb.getManyAndCount();
 
@@ -362,10 +408,7 @@ class ProjectService {
     });
     if (!project) throw new HttpError(404, "Project not found");
 
-    if (
-      project.status === "Archived" &&
-      data.status !== "Archived"
-    ) {
+    if (project.status === "Archived") {
       throw new HttpError(
         400,
         "Archived projects cannot be modified"

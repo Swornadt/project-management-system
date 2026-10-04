@@ -11,6 +11,13 @@ import { contentsRouter } from "./src/features/contents/content.routes";
 import { usersRouter } from "./src/features/users/users.routes";
 import { projectRouter } from "./src/features/projects/project.routes";
 import { tagsRouter } from "./src/features/tags/tags.routes";
+<<<<<<< HEAD
+=======
+import { tasksRouter } from "./src/features/tasks/tasks.routes";
+import { taskCommentsRouter } from "./src/features/task-comments/task-comments.routes";
+import { taskDependenciesRouter } from "./src/features/task-dependencies/task-dependencies.routes";
+import filesRoutes from "./src/features/files/files.routes";
+>>>>>>> 4f525ba53647a2673ce46bc59351bd1477927252
 
 dotenv.config();
 
@@ -36,12 +43,13 @@ app.use(`${API_PREFIX}/users`, usersRouter);
 app.use(`${API_PREFIX}/projects`, projectRouter);
 app.use(`${API_PREFIX}/contents`, contentsRouter);
 app.use(`${API_PREFIX}/tags`, tagsRouter);
+app.use(`${API_PREFIX}/tasks`, tasksRouter);
+app.use(`${API_PREFIX}/task-comments`, taskCommentsRouter);
+app.use(`${API_PREFIX}/task-dependencies`, taskDependenciesRouter);
+app.use(`${API_PREFIX}/files`, filesRoutes);
 // app.use(`${API_PREFIX}/roles`, rolesRouter);
 // app.use(`${API_PREFIX}/projects`, projectsRouter);
 // app.use(`${API_PREFIX}/project-members`, projectMembersRouter);
-// app.use(`${API_PREFIX}/tasks`, tasksRouter);
-// app.use(`${API_PREFIX}/task-comments`, taskCommentsRouter);
-// app.use(`${API_PREFIX}/task-dependencies`, taskDependenciesRouter);
 // app.use(`${API_PREFIX}/files`, filesRouter);
 // app.use(`${API_PREFIX}/project-files`, projectFilesRouter);
 // app.use(`${API_PREFIX}/notifications`, notificationsRouter);

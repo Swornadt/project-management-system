@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { SlidersHorizontal, Plus, ChevronDown, RefreshCw } from 'lucide-react';
 import { Sidebar } from '../../components/layout/Sidebar';
 import { Header } from '../../components/layout/Header';
@@ -11,7 +12,9 @@ import { NewContentModal, type NewContentPayload } from './NewContentModal';
 import { QuickSearchModal } from './QuickSearchModal';
 import { Toast } from '../../components/layout/Toast';
 import { OtherViews } from './OtherViews';
-import { contentApi } from '../../api/axiosClient';
+import { TaskBoard } from '../tasks/TaskBoard';
+import { contentApi, projectApi } from '../../api/axiosClient';
+import { NAV_PATHS, resolveNavKey } from '../../routes/navPaths';
 import {
   apiToContentItem,
   contentItemToUpdateDto,
@@ -46,8 +49,16 @@ function extractErrorMessage(err: unknown): string {
 }
 
 export const ContentDashboard = () => {
-  // Navigation
-  const [activeNav, setActiveNav] = useState<ActiveNavKey>('content-publishing');
+  // Navigation — activeNav now comes from the URL (see App.tsx's
+  // "/:navKey" route) instead of local state, so each section has a real,
+  // bookmarkable/shareable address and the browser back/forward buttons
+  // work. setActiveNav is kept as a same-signature wrapper around
+  // navigate() specifically so every existing call site below (Sidebar,
+  // OtherViews, QuickSearchModal) needs zero changes.
+  const navigate = useNavigate();
+  const { navKey } = useParams<{ navKey: string }>();
+  const activeNav = resolveNavKey(navKey);
+  const setActiveNav = (nav: ActiveNavKey) => navigate(NAV_PATHS[nav]);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Content state
@@ -92,11 +103,24 @@ export const ContentDashboard = () => {
   // source of the data changed, not how the list/table consume it.
   useEffect(() => {
     let cancelled = false;
-    contentApi
-      .list({ limit: 200 })
-      .then((res) => {
+
+    Promise.all([
+      contentApi.list({ limit: 200 }),
+      projectApi.list({ per_page: 100 }),
+    ])
+      .then(([contentResponse, projectResponse]) => {
         if (cancelled) return;
-        setAllItems(res.data.map(apiToContentItem));
+
+        const projects = projectResponse.data ?? [];
+        const projectNameMap = new Map(
+          projects.map((project) => [project.project_id, project.name] as const)
+        );
+
+        setAllItems(
+          contentResponse.data.map((apiItem) =>
+            apiToContentItem(apiItem, projectNameMap.get(apiItem.project_id))
+          )
+        );
       })
       .catch((err) => {
         if (cancelled) return;
@@ -105,6 +129,7 @@ export const ContentDashboard = () => {
       .finally(() => {
         if (!cancelled) setIsLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
@@ -182,13 +207,14 @@ export const ContentDashboard = () => {
   };
 
   const handleCreateItem = async (payload: NewContentPayload) => {
-    if (!DEV_PROJECT_ID || !DEV_AUTHOR_ID) {
+    const projectId = payload.projectId || DEV_PROJECT_ID;
+    if (!projectId || !DEV_AUTHOR_ID) {
       throw new Error(
-        'No project/author configured — set VITE_DEV_PROJECT_ID and VITE_DEV_AUTHOR_ID in .env (see the comment near the top of this file).'
+        'No project/author configured — select a real project from the backend or set VITE_DEV_PROJECT_ID and VITE_DEV_AUTHOR_ID in .env.'
       );
     }
     const res = await contentApi.create({
-      project_id: DEV_PROJECT_ID,
+      project_id: projectId,
       author_id: DEV_AUTHOR_ID,
       title: payload.title,
       slug: payload.slug,
@@ -323,6 +349,8 @@ export const ContentDashboard = () => {
                   Retry
                 </button>
               </div>
+            ) : activeNav === 'task-kanban-board' ? (
+              <TaskBoard />
             ) : activeNav === 'content-publishing' ? (
               <>
                 {/* Top Breadcrumb & Page Meta Area */}

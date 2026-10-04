@@ -1,7 +1,5 @@
 import React from 'react';
 import {
-  CheckCircle2,
-  Clock,
   ArrowRight,
   Sparkles,
 } from 'lucide-react';
@@ -20,92 +18,6 @@ export const OtherViews: React.FC<OtherViewsProps> = ({
   onOpenContentPublishing,
   onSelectItem,
 }) => {
-  if (activeNav === 'task-kanban-board') {
-    const columns = [
-      { id: 'draft', title: 'Drafting', count: items.filter((i) => i.status === 'draft').length, color: 'border-[#9b9a97]' },
-      { id: 'pending', title: 'Review / Pending', count: items.filter((i) => i.status === 'pending').length, color: 'border-[#dd5b00]' },
-      { id: 'approved', title: 'Approved', count: items.filter((i) => i.status === 'approved').length, color: 'border-[#1aae39]' },
-      { id: 'published', title: 'Published', count: items.filter((i) => i.status === 'published').length, color: 'border-[#5645d4]' },
-    ];
-
-    return (
-      <div className="space-y-6 animate-in fade-in duration-200">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#fafaf9] shadow-2xs flex items-center justify-center text-2xl border border-[#e8e7e4]">
-              📊
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-[26px] font-semibold text-[#37352f] tracking-tight">
-                  Task Kanban Board
-                </h1>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f0eeec] text-[#5d5b54]">
-                  Workspace
-                </span>
-              </div>
-              <p className="text-[14px] text-[#5d5b54] mt-0.5">
-                Visual pipeline of publications, editorial reviews, and technical compliance tasks.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onOpenContentPublishing}
-            className="px-3.5 py-2 rounded-lg bg-[#5645d4] hover:bg-[#4534b3] text-white text-[13px] font-medium transition-colors self-start sm:self-center"
-          >
-            Go to Content Database
-          </button>
-        </div>
-
-        {/* Kanban Board Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {columns.map((col) => {
-            const colItems = items.filter((it) => it.status === col.id);
-            return (
-              <div
-                key={col.id}
-                className="bg-[#fafaf9] rounded-xl p-3 border border-[#e8e7e4] flex flex-col min-h-[420px]"
-              >
-                <div className={`flex items-center justify-between pb-2 mb-3 border-b-2 ${col.color}`}>
-                  <span className="text-xs font-semibold text-[#37352f] uppercase tracking-wider">
-                    {col.title}
-                  </span>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#f0eeec] text-[#5d5b54]">
-                    {colItems.length}
-                  </span>
-                </div>
-
-                <div className="space-y-2.5 flex-1 overflow-y-auto">
-                  {colItems.map((card) => (
-                    <div
-                      key={card.id}
-                      onClick={() => onSelectItem(card)}
-                      className="bg-white p-3 rounded-lg border border-[#e8e7e4] hover:border-[#5645d4]/50 shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
-                    >
-                      <div className="text-xs font-semibold text-[#37352f] group-hover:text-[#5645d4] line-clamp-2">
-                        {card.title}
-                      </div>
-                      <div className="text-[11px] text-[#9b9a97] font-mono mt-1 truncate">
-                        {card.slug}
-                      </div>
-                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-[#f1efed] text-[11px]">
-                        <span className="text-[#5d5b54] truncate">{card.projectName}</span>
-                        <div className="flex items-center gap-1 text-[#9b9a97]">
-                          <Clock className="w-3 h-3" />
-                          <span>{card.lastUpdated}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
   if (activeNav === 'approvals-and-governance') {
     const pendingItems = items.filter((i) => i.status === 'pending');
     const approvedItems = items.filter((i) => i.status === 'approved');
@@ -146,11 +58,11 @@ export const OtherViews: React.FC<OtherViewsProps> = ({
             <span className="text-xs text-[#5d5b54]">Scheduled for next CDN cache release</span>
           </div>
           <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e8e7e4]">
-            <span className="text-xs text-[#9b9a97] uppercase font-semibold">SOC-2 Evidence Collector</span>
-            <div className="text-2xl font-semibold text-[#5645d4] mt-1">100% Passed</div>
-            <span className="text-xs text-[#1aae39] flex items-center gap-1 mt-0.5">
-              <CheckCircle2 className="w-3.5 h-3.5" /> All integrity checks clean
-            </span>
+            <span className="text-xs text-[#9b9a97] uppercase font-semibold">In Draft</span>
+            <div className="text-2xl font-semibold text-[#5d5b54] mt-1">
+              {items.filter((i) => i.status === 'draft').length}
+            </div>
+            <span className="text-xs text-[#5d5b54]">Not yet submitted for review</span>
           </div>
         </div>
 
@@ -224,8 +136,11 @@ export const OtherViews: React.FC<OtherViewsProps> = ({
           <span>Active Operations Pulse</span>
         </div>
         <p className="text-xs text-[#5d5b54] max-w-xl leading-relaxed">
-          Acme Global Operations is synchronizing 28 publications across 4 core engineering domains.
-          Content releases are staged across Enterprise Core CMS, Security &amp; Architecture, Design System Mobile, and Cloud Infrastructure.
+          {items.length} content item{items.length === 1 ? '' : 's'} tracked across{' '}
+          {new Set(items.map((i) => i.projectName)).size} project
+          {new Set(items.map((i) => i.projectName)).size === 1 ? '' : 's'} —{' '}
+          {items.filter((i) => i.status === 'published').length} published,{' '}
+          {items.filter((i) => i.status === 'pending').length} awaiting review.
         </p>
 
         <div className="pt-2 flex items-center gap-3">

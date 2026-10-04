@@ -1,7 +1,27 @@
 import { z } from "zod";
 
+const PROJECT_STATUSES = [
+  "Planned",
+  "Active",
+  "On Hold",
+  "Completed",
+  "Archived",
+] as const;
+
+const PROJECT_PRIORITIES = [
+  "Low",
+  "Medium",
+  "High",
+  "Critical",
+] as const;
+
 export const projectIdParamSchema = z.object({
   projectId: z.string().uuid(),
+});
+
+export const projectMemberParamsSchema = z.object({
+  projectId: z.string().uuid(),
+  userId: z.string().uuid(),
 });
 
 export const createProjectSchema = z.object({
@@ -21,13 +41,9 @@ export const createProjectSchema = z.object({
 
   owner_id: z.string().uuid().optional(),
 
-  status: z
-    .enum(["Planned", "Active", "On Hold", "Completed", "Archived"])
-    .optional(),
+  status: z.enum(PROJECT_STATUSES).optional(),
 
-  priority: z
-    .enum(["Low", "Medium", "High", "Critical"])
-    .optional(),
+  priority: z.enum(PROJECT_PRIORITIES).optional(),
 
   start_date: z.coerce.date().optional(),
 
@@ -57,13 +73,13 @@ export const projectQuerySchema = z.object({
 
   q: z.string().trim().optional(),
 
-  status: z.string().optional(),
+  status: z.enum(PROJECT_STATUSES).optional(),
 
   owner_id: z.string().uuid().optional(),
 
   member_id: z.string().uuid().optional(),
 
-  priority: z.string().optional(),
+  priority: z.enum(PROJECT_PRIORITIES).optional(),
 
   start_from: z.coerce.date().optional(),
 
@@ -73,24 +89,37 @@ export const projectQuerySchema = z.object({
 
   end_to: z.coerce.date().optional(),
 
-  include_archived: z
-    .enum(["true", "false"])
-    .default("false"),
+  include_archived: z.enum(["true", "false"]).default("false"),
 
-  sort: z.string().default("-created_at"),
+  sort: z
+    .enum([
+      "created_at",
+      "-created_at",
+      "updated_at",
+      "-updated_at",
+      "name",
+      "-name",
+      "key_code",
+      "-key_code",
+      "status",
+      "-status",
+      "priority",
+      "-priority",
+      "start_date",
+      "-start_date",
+      "due_date",
+      "-due_date",
+    ])
+    .default("-created_at"),
 });
 
 export const addProjectMemberSchema = z.object({
   user_id: z.string().uuid(),
 
-  role: z
-    .enum(["manager", "member"])
-    .default("member"),
+  role: z.enum(["manager", "member"]).default("member"),
 });
 
 export type CreateProjectDto = z.infer<typeof createProjectSchema>;
 export type UpdateProjectDto = z.infer<typeof updateProjectSchema>;
 export type ProjectQueryDto = z.infer<typeof projectQuerySchema>;
-export type AddProjectMemberDto = z.infer<
-  typeof addProjectMemberSchema
->;
+export type AddProjectMemberDto = z.infer<typeof addProjectMemberSchema>;

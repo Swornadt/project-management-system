@@ -12,6 +12,7 @@ import { Project } from "./project.entity";
 import { User } from "./user.entity";
 import { TaskComment } from "./task-comment.entity";
 import { TaskDependency } from "./task-dependency.entity";
+import { TaskFile } from "./task-file.entity";
 
 @Entity("tasks")
 export class Task {
@@ -42,6 +43,15 @@ export class Task {
   @Column({ type: "date", nullable: true })
   due_date?: Date;
 
+  @Column({ type: "numeric", precision: 6, scale: 2, nullable: true })
+  estimate_hours?: number;
+
+  @Column({ type: "text", array: true, default: () => "'{}'" })
+  labels!: string[];
+
+  @Column({ type: "uuid", nullable: true })
+  parent_task_id?: string;
+
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
 
@@ -53,6 +63,16 @@ export class Task {
   })
   @JoinColumn({ name: "project_id" })
   project!: Project;
+
+  @ManyToOne(() => Task, (task) => task.subtasks, {
+    onDelete: "CASCADE",
+    nullable: true,
+  })
+  @JoinColumn({ name: "parent_task_id" })
+  parent_task?: Task;
+
+  @OneToMany(() => Task, (task) => task.parent_task)
+  subtasks!: Task[];
 
   @ManyToOne(() => User, (user) => user.assigned_tasks, {
     onDelete: "SET NULL",
@@ -74,4 +94,7 @@ export class Task {
 
   @OneToMany(() => TaskDependency, (td) => td.depends_on_task)
   dependent_tasks!: TaskDependency[];
+
+  @OneToMany(() => TaskFile, (tf) => tf.task)
+  task_files!: TaskFile[];
 }

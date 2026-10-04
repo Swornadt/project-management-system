@@ -11,6 +11,10 @@ import {
 
 import { User } from "./user.entity";
 import { ProjectMember } from "./project-member.entity";
+import { Task } from "./task.entity";
+import { Content } from "./content.entity";
+import { ProjectFile } from "./project-file.entity";
+import { ActivityLog } from "./activity-log.entity";
 
 @Entity("projects")
 export class Project {
@@ -50,6 +54,18 @@ export class Project {
 
   @OneToMany(() => ProjectMember, (pm) => pm.project)
   members!: ProjectMember[];
+
+  @OneToMany(() => Task, (task) => task.project)
+  tasks!: Task[];
+
+  @OneToMany(() => Content, (content) => content.project)
+  contents!: Content[];
+
+  @OneToMany(() => ProjectFile, (pf) => pf.project)
+  project_files!: ProjectFile[];
+
+  @OneToMany(() => ActivityLog, (log) => log.project)
+  activity_logs!: ActivityLog[];
 
   @CreateDateColumn({ name: "created_at" })
   created_at!: Date;

@@ -46,16 +46,17 @@ function relativeTime(isoDate: string): string {
   return `${days}d ago`;
 }
 
-export function apiToContentItem(api: ApiContentResponse): ContentItem {
+export function apiToContentItem(
+  api: ApiContentResponse,
+  projectNameOverride?: string
+): ContentItem {
   return {
     id: api.content_id,
     title: api.title,
     slug: api.slug,
     version: `v${api.version}`,
-    // No live /projects endpoint yet — project_id stands in for both
-    // fields until Projects is wired up. Not a display bug; a real gap.
     project: api.project_id,
-    projectName: api.project_id,
+    projectName: projectNameOverride ?? api.project_id,
     status: STATUS_API_TO_UI[api.status],
     author: placeholderAuthor(api.author_id),
     lastUpdated: relativeTime(api.updated_at),

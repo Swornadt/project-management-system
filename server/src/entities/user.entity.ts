@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  Index,
 } from "typeorm";
 import { Exclude } from "class-transformer";
 import { Role } from "./role.entity";
@@ -20,6 +21,10 @@ import { Notification } from "./notification.entity";
 import { ActivityLog } from "./activity-log.entity";
 
 @Entity("users")
+@Index(["status"])
+@Index(["email_verified"])
+@Index(["deleted_at"])
+@Index(["created_at"])
 export class User {
   @PrimaryGeneratedColumn("uuid")
   user_id!: string;
@@ -79,6 +84,13 @@ export class User {
 
   @UpdateDateColumn({ type: "timestamp" })
   updated_at!: Date;
+
+  @Column({ type: "uuid", nullable: true })
+  avatar_file_id?: string;
+
+  @ManyToOne(() => File, { onDelete: "SET NULL" })
+  @JoinColumn({ name: "avatar_file_id" })
+  avatar?: File;
 
   @ManyToOne(() => Role, (role) => role.users)
   @JoinColumn({ name: "role_id" })
