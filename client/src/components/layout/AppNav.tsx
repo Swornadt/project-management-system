@@ -12,15 +12,18 @@ const AppNav = () => {
   };
 
   const navItems = [
-    { path: "/dashboard", label: "Dashboard" },
-    { path: "/users", label: "Users" },
+    { path: "/admin", label: "Dashboard" },
+    { path: "/admin/users", label: "Users" },
+    { path: "/admin/projects", label: "Projects" },
+    { path: "/admin/tasks", label: "Tasks" },
+    { path: "/admin/content", label: "Content" },
   ];
 
   return (
     <nav className="bg-white border-b border-[#e5e3df] px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <h1 className="text-xl font-semibold text-[#1a1a1a]">Project Management</h1>
+          <h1 className="text-xl font-semibold text-[#1a1a1a]">Admin Portal</h1>
           <div className="flex items-center gap-2">
             {navItems.map((item) => (
               <button
