@@ -27,6 +27,17 @@ const App = () => {
           }
         />
 
+        {/* Project details. Rendered by the same shell as every other section;
+            ContentDashboard maps the :projectId param to the projects nav key. */}
+        <Route
+          path="/projects/:projectId"
+          element={
+            <RequireAuth>
+              <ContentDashboard />
+            </RequireAuth>
+          }
+        />
+
         <Route path="*" element={<Navigate to={NAV_PATHS[DEFAULT_NAV]} replace />} />
       </Routes>
     </BrowserRouter>

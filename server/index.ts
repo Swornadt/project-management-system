@@ -11,13 +11,10 @@ import { contentsRouter } from "./src/features/contents/content.routes";
 import { usersRouter } from "./src/features/users/users.routes";
 import { projectRouter } from "./src/features/projects/project.routes";
 import { tagsRouter } from "./src/features/tags/tags.routes";
-<<<<<<< HEAD
-=======
 import { tasksRouter } from "./src/features/tasks/tasks.routes";
 import { taskCommentsRouter } from "./src/features/task-comments/task-comments.routes";
 import { taskDependenciesRouter } from "./src/features/task-dependencies/task-dependencies.routes";
 import filesRoutes from "./src/features/files/files.routes";
->>>>>>> 4f525ba53647a2673ce46bc59351bd1477927252
 
 dotenv.config();
 

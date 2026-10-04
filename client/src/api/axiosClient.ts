@@ -6,6 +6,11 @@ import type {
   ApiDecideApprovalDto,
   ApiProjectResponse,
   ApiProjectListPage,
+  ApiProjectDashboard,
+  ApiCreateProjectDto,
+  ApiUpdateProjectDto,
+  ApiProjectMember,
+  ApiUserSummary,
   ApiResponse,
 } from "./types";
 
@@ -75,6 +80,50 @@ export const projectApi = {
         };
         return response;
       }),
+
+  // Project + owner + members + progress/task counts in one call.
+  dashboard: (id: string) =>
+    axiosClient
+      .get<ApiResponse<ApiProjectDashboard>>(`/projects/${id}/dashboard`)
+      .then((res) => res.data),
+
+  create: (payload: ApiCreateProjectDto) =>
+    axiosClient
+      .post<ApiResponse<ApiProjectResponse>>("/projects", payload)
+      .then((res) => res.data),
+
+  update: (id: string, payload: ApiUpdateProjectDto) =>
+    axiosClient
+      .patch<ApiResponse<ApiProjectResponse>>(`/projects/${id}`, payload)
+      .then((res) => res.data),
+
+  archive: (id: string) =>
+    axiosClient
+      .patch<ApiResponse<{ message: string; project_id: string; status: string }>>(
+        `/projects/${id}/archive`
+      )
+      .then((res) => res.data),
+
+  addMember: (id: string, userId: string) =>
+    axiosClient
+      .post<ApiResponse<ApiProjectMember>>(`/projects/${id}/members`, {
+        user_id: userId,
+        role: "member",
+      })
+      .then((res) => res.data),
+
+  removeMember: (id: string, userId: string) =>
+    axiosClient
+      .delete<ApiResponse<{ message: string }>>(`/projects/${id}/members/${userId}`)
+      .then((res) => res.data),
+};
+
+// GET /users/search is Admin/Manager only; used to name members and pick new ones.
+export const userApi = {
+  search: (params?: { q?: string; limit?: number }) =>
+    axiosClient
+      .get<ApiResponse<ApiUserSummary[]>>("/users/search", { params })
+      .then((res) => res.data),
 };
 
 export const contentApi = {

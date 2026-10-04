@@ -13,6 +13,7 @@ import { QuickSearchModal } from './QuickSearchModal';
 import { Toast } from '../../components/layout/Toast';
 import { OtherViews } from './OtherViews';
 import { TaskBoard } from '../tasks/TaskBoard';
+import ProjectsPage from '../projects/ProjectsPage';
 import { contentApi, projectApi } from '../../api/axiosClient';
 import { NAV_PATHS, resolveNavKey } from '../../routes/navPaths';
 import {
@@ -56,8 +57,9 @@ export const ContentDashboard = () => {
   // navigate() specifically so every existing call site below (Sidebar,
   // OtherViews, QuickSearchModal) needs zero changes.
   const navigate = useNavigate();
-  const { navKey } = useParams<{ navKey: string }>();
-  const activeNav = resolveNavKey(navKey);
+  const { navKey, projectId } = useParams<{ navKey: string; projectId: string }>();
+  // /projects/:projectId has no :navKey segment, so it maps to the projects nav.
+  const activeNav = projectId ? 'projects-and-roadmaps' : resolveNavKey(navKey);
   const setActiveNav = (nav: ActiveNavKey) => navigate(NAV_PATHS[nav]);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -334,7 +336,9 @@ export const ContentDashboard = () => {
         {/* Page Content Body */}
         <main className="relative pt-14 w-full px-4 sm:px-8 bg-white min-h-[calc(100vh-3.5rem)]">
           <div className="max-w-[1240px] w-full mx-auto py-8 px-1 sm:px-4 flex flex-col gap-6">
-            {isLoading ? (
+            {activeNav === 'projects-and-roadmaps' ? (
+              <ProjectsPage />
+            ) : isLoading ? (
               <div className="flex items-center justify-center py-24 text-[#5d5b54] text-sm gap-2">
                 <RefreshCw className="w-4 h-4 animate-spin" />
                 <span>Loading content...</span>

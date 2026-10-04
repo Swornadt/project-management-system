@@ -17,7 +17,45 @@ export interface ApiProjectResponse {
   archived_at?: string | null;
   created_at: string;
   updated_at: string;
+  // Only present when the endpoint joins them (list: owner; dashboard: owner + members).
+  owner?: ApiUserSummary;
+  members?: ApiProjectMember[];
 }
+
+export interface ApiUserSummary {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+export interface ApiProjectMember {
+  project_id: string;
+  user_id: string;
+  role: string; // "manager" | "member"
+  joined_at: string;
+}
+
+// GET /projects/:id/dashboard — trimmed to what the details screen uses.
+export interface ApiProjectDashboard {
+  project: ApiProjectResponse;
+  progress: number; // 0-100
+  task_counts: { total: number; completed: number; in_progress: number; todo: number };
+  overdue_tasks: { task_id: string; title: string; due_date?: string }[];
+}
+
+// Mirrors server/src/features/projects/project.dto.ts
+export interface ApiCreateProjectDto {
+  name: string;
+  key_code: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  start_date?: string;
+  due_date?: string;
+}
+
+export type ApiUpdateProjectDto = Partial<Omit<ApiCreateProjectDto, "key_code">>;
 
 // The raw shape GET /projects actually sends — a different convention than
 // every other list endpoint (array nested under .projects, pagination
