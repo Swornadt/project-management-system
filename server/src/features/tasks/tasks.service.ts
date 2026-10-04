@@ -11,8 +11,6 @@ import type {
 } from "./tasks.dto";
 import type { PaginatedResponse, PaginationParams, SortParams } from "../../shared/types";
 
-// Statuses per SRS §5.5. Backlog/Todo are both "not started" buckets that
-// teams use differently, so both are valid entry points.
 export const TASK_STATUSES = [
   "backlog",
   "todo",

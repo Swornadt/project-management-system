@@ -16,6 +16,10 @@ export class RolesService extends BaseCRUDService<Role, CreateRoleDto, UpdateRol
     super(Role, "role_id");
   }
 
+  async findAll(): Promise<Role[]> {
+    return this.getRepository().find();
+  }
+
   async findByName(name: string): Promise<Role | null> {
     return this.getRepository().findOne({ where: { name } });
   }
