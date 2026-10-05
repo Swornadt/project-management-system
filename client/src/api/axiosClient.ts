@@ -22,12 +22,27 @@ export const axiosClient = axios.create({
 // Attaches the JWT (set manually via localStorage for now, until real
 // auth/login exists — see the console command used to seed it in dev).
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  // "accessToken" is what LoginPage saves; "token" is kept for the older admin login page.
+  const token = localStorage.getItem("accessToken") ?? localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+axiosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isLoginRequest = error.config?.url?.includes("/auth/login");
+    if (error.response?.status === 401 && !isLoginRequest) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("token");
+      localStorage.removeItem("authUser");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
 export function setAccessToken(token: string) {
   localStorage.setItem("accessToken", token);

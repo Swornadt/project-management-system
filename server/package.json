@@ -48,15 +48,8 @@
     "@types/supertest": "^7.2.1",
     "supertest": "^7.3.0",
     "tsx": "^4.23.15",
-<<<<<<< HEAD
-    "typeorm-ts-node-commonjs": "^0.3.20",
-    "typescript": "^7.0.2",
-    "typeorm-ts-node-esm": "^0.3.20",
-    "vitest": "^5.0.1"
-=======
     "typeorm-ts-node-esm": "^0.3.20",
     "typescript": "^5.7.2",
     "vitest": "^5.0.3"
->>>>>>> d3ef43a443fef3b9056d41c2a5968855ec532b9c
   }
 }
