@@ -4,6 +4,7 @@ import { RequireAuth } from "./features/auth/RequireAuth";
 import LoginPage from "./pages/LoginPage";
 import { NAV_PATHS, DEFAULT_NAV } from "./routes/navPaths";
 import UserManagement from "./pages/UserManagement";
+import AdminDashboard from "./pages/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
@@ -39,14 +40,23 @@ const App = () => {
           }
         />
         <Route
-          path="/users"
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
           element={
             <ProtectedRoute>
               <UserManagement />
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/users" element={<Navigate to="/admin/users" replace />} />
+        <Route path="/" element={<Navigate to="/admin" replace />} />
       </Routes>
     </BrowserRouter>
   );
