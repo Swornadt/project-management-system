@@ -29,3 +29,21 @@ export function requireParams(required: string[]) {
     next();
   };
 }
+
+export interface QuerySchema<T> {
+  parse: (raw: Record<string, unknown>) => { value: T; errors: string[] };
+}
+
+export function validateQuery<T>(schema: QuerySchema<T>) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const { value, errors } = schema.parse(req.query as Record<string, unknown>);
+
+    if (errors.length > 0) {
+      next(new HttpError(400, `Invalid query parameters: ${errors.join("; ")}`));
+      return;
+    }
+    res.locals.validatedQuery = value;
+
+    next();
+  };
+}

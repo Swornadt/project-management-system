@@ -3,9 +3,6 @@ import { Notification } from "../../entities/notification.entity";
 import { HttpError } from "../../shared/middleware/error.middleware";
 import type { NotificationQueryDto } from "./notifications.dto";
 import type { PaginatedResponse } from "../../shared/types";
-
-// Notifications are created as a side effect of other features (content
-// approvals, task assignment/status changes/comments.
 export class NotificationsService {
   private repo() {
     return getRepo(Notification);
@@ -13,7 +10,12 @@ export class NotificationsService {
 
   async listForUser(
     userId: string,
-    filters: NotificationQueryDto = {}
+    filters: NotificationQueryDto = {
+      is_read: undefined,
+      type: undefined,
+      limit: undefined,
+      offset: undefined,
+    }
   ): Promise<PaginatedResponse<Notification>> {
     const qb = this.repo()
       .createQueryBuilder("notification")
@@ -39,11 +41,15 @@ export class NotificationsService {
   }
 
   async unreadCount(userId: string): Promise<number> {
-    return this.repo().count({ where: { user_id: userId, is_read: false } as any });
+    return this.repo().count({
+      where: { user_id: userId, is_read: false } as any,
+    });
   }
 
   async markAsRead(id: string, userId: string): Promise<Notification> {
-    const notification = await this.repo().findOne({ where: { notification_id: id } as any });
+    const notification = await this.repo().findOne({
+      where: { notification_id: id } as any,
+    });
     if (!notification) throw new HttpError(404, "Notification not found");
     if (notification.user_id !== userId) {
       throw new HttpError(403, "You can only manage your own notifications");
@@ -65,7 +71,9 @@ export class NotificationsService {
   }
 
   async remove(id: string, userId: string): Promise<boolean> {
-    const notification = await this.repo().findOne({ where: { notification_id: id } as any });
+    const notification = await this.repo().findOne({
+      where: { notification_id: id } as any,
+    });
     if (!notification) return false;
     if (notification.user_id !== userId) {
       throw new HttpError(403, "You can only manage your own notifications");
