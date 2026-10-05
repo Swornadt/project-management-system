@@ -5,6 +5,7 @@ import { projectApi, userApi, getStoredUser } from '../../api/axiosClient';
 import type { ApiProjectDashboard, ApiUserSummary } from '../../api/types';
 import { Toast } from '../../components/layout/Toast';
 import { ProjectFormModal } from './ProjectFormModal';
+import { FileAttachments } from '../files/FileAttachments';
 import {
   PRIORITY_DOT,
   STATUS_STYLE,
@@ -298,6 +299,10 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId }) => {
             </button>
           </div>
         )}
+      </section>
+
+      <section className="bg-white rounded-xl border border-[#e8e7e4] p-5">
+        <FileAttachments scope="project" id={project.project_id} />
       </section>
 
       {editOpen && (
