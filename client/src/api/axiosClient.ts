@@ -4,6 +4,8 @@ import type {
   ApiCreateContentDto,
   ApiUpdateContentDto,
   ApiDecideApprovalDto,
+  ApiProjectResponse,
+  ApiProjectListPage,
   ApiResponse,
 } from "./types";
 
@@ -12,6 +14,8 @@ export const axiosClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Attaches the JWT (set via setAccessToken() on login, or manually via
+// localStorage for dev testing before a login screen existed).
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -19,6 +23,14 @@ axiosClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+export function setAccessToken(token: string) {
+  localStorage.setItem("accessToken", token);
+}
+
+export function clearAccessToken() {
+  localStorage.removeItem("accessToken");
+}
 
 axiosClient.interceptors.response.use(
   (response) => response,
@@ -36,6 +48,40 @@ export interface ListParams {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
+
+export const projectApi = {
+  // GET /projects nests its array under .projects and paginates with
+  // page/per_page/total_pages, unlike every other list endpoint in this
+  // codebase (bare array in `data`, a sibling `meta` with limit/offset/
+  // count). That mismatch — not a typo — was the cause of the earlier
+  // "projects.map is not a function" error: the old type annotation here
+  // claimed `data` was ApiProjectResponse[] when it was actually
+  // { projects, pagination }, so TypeScript had no way to catch it.
+  //
+  // Translating the response here, once, means every caller (existing and
+  // future) can keep using the same `res.data` / `res.meta` pattern as
+  // contentApi/taskApi/etc. without needing to know this endpoint is
+  // shaped differently under the hood.
+  list: (params?: Record<string, string | number | boolean | undefined>) =>
+    axiosClient
+      .get<ApiResponse<ApiProjectListPage>>("/projects", { params })
+      .then((res) => {
+        const { projects, pagination } = res.data.data;
+        const response: ApiResponse<ApiProjectResponse[]> = {
+          success: res.data.success,
+          statusCode: res.data.statusCode,
+          message: res.data.message,
+          data: projects,
+          meta: {
+            total: pagination.total,
+            limit: pagination.per_page,
+            offset: (pagination.page - 1) * pagination.per_page,
+            count: projects.length,
+          },
+        };
+        return response;
+      }),
+};
 
 export const contentApi = {
   list: (params?: ListParams) =>
@@ -110,3 +156,26 @@ export const taskApi = {
   remove: (id: string) =>
     axiosClient.delete<ApiResponse<boolean>>(`/tasks/${id}`).then((res) => res.data),
 };
+
+// --- Auth ---
+import type { ApiLoginDto, ApiAuthResponse, ApiUserProfile } from "./authTypes";
+
+export const authApi = {
+  login: (payload: ApiLoginDto) =>
+    axiosClient.post<ApiResponse<ApiAuthResponse>>("/auth/login", payload).then((res) => res.data),
+};
+
+const STORED_USER_KEY = "authUser";
+
+export function setStoredUser(user: ApiUserProfile) {
+  localStorage.setItem(STORED_USER_KEY, JSON.stringify(user));
+}
+
+export function getStoredUser(): ApiUserProfile | null {
+  const raw = localStorage.getItem(STORED_USER_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+export function clearStoredUser() {
+  localStorage.removeItem(STORED_USER_KEY);
+}

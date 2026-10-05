@@ -4,6 +4,38 @@
 
 export type ApiContentStatus = "draft" | "pending_approval" | "approved" | "published";
 
+export interface ApiProjectResponse {
+  project_id: string;
+  key_code: string;
+  name: string;
+  description?: string | null;
+  owner_id: string;
+  status: string;
+  priority: string;
+  start_date?: string | null;
+  due_date?: string | null;
+  archived_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// The raw shape GET /projects actually sends — a different convention than
+// every other list endpoint (array nested under .projects, pagination
+// nested under .pagination as page/per_page/total_pages rather than a
+// sibling `meta` with limit/offset/count). Not meant to be used directly by
+// components — projectApi.list() below translates this into the same
+// ApiResponse<ApiProjectResponse[]> shape every other *Api.list() returns,
+// so callers don't need to know this discrepancy exists.
+export interface ApiProjectListPage {
+  projects: ApiProjectResponse[];
+  pagination: {
+    page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  };
+}
+
 export interface ApiContentResponse {
   content_id: string;
   project_id: string;
