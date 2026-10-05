@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Pencil, RefreshCw, Archive, X } from 'lucide-react';
+import { ArrowLeft, Pencil, RefreshCw, Archive, X, ListChecks } from 'lucide-react';
 import { projectApi, userApi, getStoredUser } from '../../api/axiosClient';
 import type { ApiProjectDashboard, ApiUserSummary } from '../../api/types';
 import { Toast } from '../../components/layout/Toast';
@@ -182,24 +182,33 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId }) => {
           </div>
         </div>
 
-        {canManage && (
-          <div className="flex gap-2 shrink-0">
-            <button
-              onClick={() => setEditOpen(true)}
-              className="px-3 py-2 rounded-lg border border-[#e8e7e4] text-xs font-medium text-[#37352f] hover:bg-[#f0eeec] flex items-center gap-1.5"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-              Edit
-            </button>
-            <button
-              onClick={handleArchive}
-              className="px-3 py-2 rounded-lg border border-[#e8e7e4] text-xs font-medium text-[#5d5b54] hover:bg-[#f0eeec] flex items-center gap-1.5"
-            >
-              <Archive className="w-3.5 h-3.5" />
-              Archive
-            </button>
-          </div>
-        )}
+        <div className="flex gap-2 shrink-0">
+          <Link
+            to={`/tasks?project=${project.project_id}`}
+            className="px-3 py-2 rounded-lg border border-[#e8e7e4] text-xs font-medium text-[#37352f] hover:bg-[#f0eeec] flex items-center gap-1.5"
+          >
+            <ListChecks className="w-3.5 h-3.5" />
+            Tasks
+          </Link>
+          {canManage && (
+            <>
+              <button
+                onClick={() => setEditOpen(true)}
+                className="px-3 py-2 rounded-lg border border-[#e8e7e4] text-xs font-medium text-[#37352f] hover:bg-[#f0eeec] flex items-center gap-1.5"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Edit
+              </button>
+              <button
+                onClick={handleArchive}
+                className="px-3 py-2 rounded-lg border border-[#e8e7e4] text-xs font-medium text-[#5d5b54] hover:bg-[#f0eeec] flex items-center gap-1.5"
+              >
+                <Archive className="w-3.5 h-3.5" />
+                Archive
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {actionError && <p className="text-xs text-[#ba1a1a]">{actionError}</p>}
