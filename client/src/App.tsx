@@ -12,10 +12,6 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-<<<<<<< HEAD
-=======
-
->>>>>>> d3ef43a443fef3b9056d41c2a5968855ec532b9c
         {/* Bare "/" -> the default section's real URL, so the address bar
             always reflects an actual page rather than a redirect target. */}
         <Route path="/" element={<Navigate to={NAV_PATHS[DEFAULT_NAV]} replace />} />
