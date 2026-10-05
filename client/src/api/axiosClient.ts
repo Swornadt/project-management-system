@@ -14,19 +14,15 @@ import type {
   ApiResponse,
 } from "./types";
 
-// Relative path — Vite's dev server proxies /api to the backend (see
-// vite.config.ts), so this works locally with no env var. In production,
-// set VITE_API_BASE_URL and swap the baseURL below to
-// import.meta.env.VITE_API_BASE_URL ?? "/api/v1".
 export const axiosClient = axios.create({
   baseURL: "/api/v1",
   headers: { "Content-Type": "application/json" },
 });
 
-// Attaches the JWT (set via setAccessToken() on login, or manually via
-// localStorage for dev testing before a login screen existed).
+// Attaches the JWT (set manually via localStorage for now, until real
+// auth/login exists — see the console command used to seed it in dev).
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -41,6 +37,16 @@ export function clearAccessToken() {
   localStorage.removeItem("accessToken");
 }
 
+axiosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 export interface ListParams {
   limit?: number;
   offset?: number;

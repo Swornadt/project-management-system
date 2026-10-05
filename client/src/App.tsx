@@ -3,13 +3,15 @@ import ContentDashboard from "./features/content/ContentDashboard";
 import { RequireAuth } from "./features/auth/RequireAuth";
 import LoginPage from "./pages/LoginPage";
 import { NAV_PATHS, DEFAULT_NAV } from "./routes/navPaths";
+import UserManagement from "./pages/UserManagement";
+import AdminDashboard from "./pages/AdminDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-
         {/* Bare "/" -> the default section's real URL, so the address bar
             always reflects an actual page rather than a redirect target. */}
         <Route path="/" element={<Navigate to={NAV_PATHS[DEFAULT_NAV]} replace />} />
@@ -39,6 +41,32 @@ const App = () => {
         />
 
         <Route path="*" element={<Navigate to={NAV_PATHS[DEFAULT_NAV]} replace />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <ContentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute>
+              <UserManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/users" element={<Navigate to="/admin/users" replace />} />
+        <Route path="/" element={<Navigate to="/admin" replace />} />
       </Routes>
     </BrowserRouter>
   );

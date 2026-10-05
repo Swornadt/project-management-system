@@ -38,18 +38,14 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.2.0",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.3",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "ts-node": "^10.9.2",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "typeorm-ts-node-commonjs": "^0.3.20",
-<<<<<<< HEAD
-    "typescript": "^7.0.2"
-=======
-    "typeorm-ts-node-esm": "^0.3.20",
     "typescript": "^7.0.2",
->>>>>>> 4f525ba53647a2673ce46bc59351bd1477927252
+    "typeorm-ts-node-esm": "^0.3.20",
     "vitest": "^5.0.1"
   }
 }
