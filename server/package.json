@@ -4,11 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "vitest run",
+    "test": "NODE_ENV=test vitest run",
+    "test:watch": "NODE_ENV=test vitest",
     "dev": "tsx watch index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "typeorm": "typeorm-ts-node-esm",
+    "typeorm": "typeorm-ts-node-esm -d src/shared/db/data-source.ts",
+    "migration:generate": "npm run typeorm -- migration:generate",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert",
+    "migration:show": "npm run typeorm -- migration:show",
     "schema:sync": "tsx src/shared/db/data-source.ts",
     "seed": "tsx src/shared/db/seed.ts"
   },
@@ -19,21 +24,20 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "file-type": "^22.1.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.4.0",
-    "node": "^26.8.1",
     "nodemailer": "^10.0.10",
     "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
-    "typeorm": "^1.1.1",
+    "typeorm": "^0.3.20",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
@@ -41,11 +45,18 @@
     "@types/node": "^26.6.3",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
-    "ts-node": "^10.9.2",
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.0",
     "tsx": "^4.23.15",
+<<<<<<< HEAD
     "typeorm-ts-node-commonjs": "^0.3.20",
     "typescript": "^7.0.2",
     "typeorm-ts-node-esm": "^0.3.20",
     "vitest": "^5.0.1"
+=======
+    "typeorm-ts-node-esm": "^0.3.20",
+    "typescript": "^5.7.2",
+    "vitest": "^5.0.3"
+>>>>>>> d3ef43a443fef3b9056d41c2a5968855ec532b9c
   }
 }

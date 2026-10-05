@@ -229,6 +229,10 @@ const NewContentModalContent: React.FC<NewContentModalContentProps> = ({
           </div>
 
           <p className="text-[11px] text-[#9b9a97] -mt-2">
+<<<<<<< HEAD
+=======
+            Project selection is pulling from the live backend; authors remain a UI-only default until the user directory is available.
+>>>>>>> d3ef43a443fef3b9056d41c2a5968855ec532b9c
             Project and Author selection isn't wired to real data yet.
           </p>
 

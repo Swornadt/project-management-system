@@ -19,11 +19,12 @@ import { rolesRouter } from "./src/features/roles/roles.routes";
 import { adminRouter } from "./src/features/admin/admin.routes";
 import filesRoutes from "./src/features/files/files.routes";
 import { approvalsRouter } from "./src/features/approvals/approvals.routes";
+import { auditLogsRouter } from "./src/features/audit-logs/audit.routes";
 import { startPublishScheduler } from "./src/shared/jobs/publish-scheduled.jobs";
 
 dotenv.config();
 
-const app = express();
+export const app = express();
 const PORT = Number(process.env.PORT) || 5001;
 const API_PREFIX = "/api/v1";
 
@@ -50,9 +51,10 @@ app.use(`${API_PREFIX}/tasks`, tasksRouter);
 app.use(`${API_PREFIX}/task-comments`, taskCommentsRouter);
 app.use(`${API_PREFIX}/task-dependencies`, taskDependenciesRouter);
 app.use(`${API_PREFIX}/files`, filesRoutes);
-app.use(`${API_PREFIX}/roles`, rolesRouter);
 app.use(`${API_PREFIX}/notifications`, notificationsRouter);
 app.use(`${API_PREFIX}/approvals`, approvalsRouter);
+app.use(`${API_PREFIX}/audit-logs`, auditLogsRouter);
+app.use(`${API_PREFIX}/roles`, rolesRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
@@ -61,15 +63,12 @@ async function startServer() {
   try {
     await AppDataSource.initialize();
     console.log("Database connected successfully.");
-    console.log("Schema synchronized to database.");
 
     startPublishScheduler();
 
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
-      console.log(
-        `API routes available under ${API_PREFIX} for all 15 feature modules.`
-      );
+      console.log(`API routes available under ${API_PREFIX}`);
     });
   } catch (error) {
     console.error("Error starting server:", error);
@@ -77,4 +76,6 @@ async function startServer() {
   }
 }
 
-startServer();
+if (!process.env.VITEST) {
+  startServer();
+}

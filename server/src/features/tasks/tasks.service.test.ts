@@ -58,7 +58,9 @@ describe("TaskService", () => {
     vi.clearAllMocks();
     mockTaskRepo.create.mockImplementation((data: any) => data);
     mockTaskRepo.save.mockImplementation(async (entity: any) => entity);
-    mockTaskRepo.merge.mockImplementation((target: any, source: any) => Object.assign(target, source));
+    mockTaskRepo.merge.mockImplementation((target: any, source: any) =>
+      Object.assign(target, source)
+    );
     mockTaskRepo.update.mockImplementation(async () => ({ affected: 1 }));
     mockNotificationRepo.create.mockImplementation((data: any) => data);
     mockNotificationRepo.save.mockImplementation(async (entity: any) => entity);
@@ -82,15 +84,24 @@ describe("TaskService", () => {
     });
 
     it("throws 403 if a non-privileged user is not the assignee", async () => {
-      mockTaskRepo.findOne.mockResolvedValue(makeTask({ assignee_id: "assignee-1" }));
+      mockTaskRepo.findOne.mockResolvedValue(
+        makeTask({ assignee_id: "assignee-1" })
+      );
       await expect(
         service.updateStatus("task-1", "in_progress", "someone-else", "Employee")
       ).rejects.toMatchObject({ statusCode: 403 });
     });
 
     it("allows the assignee (an Employee) to update their own task", async () => {
-      mockTaskRepo.findOne.mockResolvedValue(makeTask({ status: "todo", assignee_id: "assignee-1" }));
-      const result = await service.updateStatus("task-1", "in_progress", "assignee-1", "Employee");
+      mockTaskRepo.findOne.mockResolvedValue(
+        makeTask({ status: "todo", assignee_id: "assignee-1" })
+      );
+      const result = await service.updateStatus(
+        "task-1",
+        "in_progress",
+        "assignee-1",
+        "Employee"
+      );
       expect(result.status).toBe("in_progress");
     });
 
@@ -103,7 +114,12 @@ describe("TaskService", () => {
 
     it("allows a Manager to move any task and logs the activity", async () => {
       mockTaskRepo.findOne.mockResolvedValue(makeTask({ status: "todo" }));
-      const result = await service.updateStatus("task-1", "in_progress", "manager-1", "Manager");
+      const result = await service.updateStatus(
+        "task-1",
+        "in_progress",
+        "manager-1",
+        "Manager"
+      );
       expect(result.status).toBe("in_progress");
       expect(mockActivityLogRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({ action: "task.status_changed" })
@@ -116,7 +132,10 @@ describe("TaskService", () => {
       );
       await service.updateStatus("task-1", "in_progress", "manager-1", "Manager");
       expect(mockNotificationRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ user_id: "creator-1", type: "task_status_changed" })
+        expect.objectContaining({
+          user_id: "creator-1",
+          type: "task_status_changed",
+        })
       );
     });
   });
@@ -124,14 +143,16 @@ describe("TaskService", () => {
   describe("assign", () => {
     it("throws 404 if the task does not exist", async () => {
       mockTaskRepo.findOne.mockResolvedValue(null);
-      await expect(service.assign("missing", "user-2", "manager-1")).rejects.toMatchObject({
+      await expect(
+        service.assign("missing", "user-2", "manager-1")
+      ).rejects.toMatchObject({
         statusCode: 404,
       });
     });
 
     it("assigns the task and notifies the new assignee", async () => {
       mockTaskRepo.findOne
-        .mockResolvedValueOnce(makeTask({ assignee_id: undefined }))
+        .mockResolvedValueOnce(makeTask({ assignee_id: null }))
         .mockResolvedValueOnce(makeTask({ assignee_id: "user-2" }));
 
       const result = await service.assign("task-1", "user-2", "manager-1");
@@ -149,11 +170,14 @@ describe("TaskService", () => {
     it("unassigns the task when assigneeId is null and skips the notification", async () => {
       mockTaskRepo.findOne
         .mockResolvedValueOnce(makeTask({ assignee_id: "assignee-1" }))
-        .mockResolvedValueOnce(makeTask({ assignee_id: undefined }));
+        .mockResolvedValueOnce(makeTask({ assignee_id: null }));
 
       await service.assign("task-1", null, "manager-1");
 
-      expect(mockTaskRepo.update).toHaveBeenCalledWith({ task_id: "task-1" }, { assignee_id: null });
+      expect(mockTaskRepo.update).toHaveBeenCalledWith(
+        { task_id: "task-1" },
+        { assignee_id: null }
+      );
       expect(mockNotificationRepo.save).not.toHaveBeenCalled();
     });
   });
@@ -182,7 +206,9 @@ describe("TaskService", () => {
     });
 
     it("throws 400 when the parent task belongs to a different project", async () => {
-      mockTaskRepo.findOne.mockResolvedValue(makeTask({ project_id: "other-project" }));
+      mockTaskRepo.findOne.mockResolvedValue(
+        makeTask({ project_id: "other-project" })
+      );
       await expect(
         service.create({
           project_id: "project-1",

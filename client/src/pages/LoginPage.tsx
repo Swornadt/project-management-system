@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d3ef43a443fef3b9056d41c2a5968855ec532b9c
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthCard } from '../features/auth/AuthCard';
 import { authApi, setAccessToken, setStoredUser } from '../api/axiosClient';
@@ -28,6 +31,7 @@ export default function LoginPage() {
     </div>
   );
 }
+<<<<<<< HEAD
 =======
 import AuthPage from "./AuthPage";
 
@@ -37,3 +41,5 @@ const LoginPage = () => {
 
 export default LoginPage;
 >>>>>>> 963efec4e020f5434754287ebe13f42b0d1b8370
+=======
+>>>>>>> d3ef43a443fef3b9056d41c2a5968855ec532b9c

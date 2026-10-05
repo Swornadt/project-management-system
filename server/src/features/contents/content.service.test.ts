@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { HttpError } from "../../shared/middleware/error.middleware";
 import { ContentService } from "./content.service";
 import type { Content } from "../../entities/content.entity";
+import { ContentStatus } from "../../entities/approval.entity";
 
 const mockRepo = {
   findOne: vi.fn(),
@@ -23,7 +24,7 @@ function makeContent(overrides: Partial<Content> = {}): Content {
     title: "Test content",
     slug: "test-content",
     body: "...",
-    status: "draft",
+    status: ContentStatus.DRAFT,
     version: 1,
     created_at: new Date(),
     updated_at: new Date(),
@@ -38,7 +39,9 @@ describe("ContentService", () => {
     vi.clearAllMocks();
     mockRepo.create.mockImplementation((data: any) => data);
     mockRepo.save.mockImplementation(async (entity: any) => entity);
-    mockRepo.merge.mockImplementation((target: any, source: any) => Object.assign(target, source));
+    mockRepo.merge.mockImplementation((target: any, source: any) =>
+      Object.assign(target, source)
+    );
     service = new ContentService();
   });
 
@@ -51,14 +54,18 @@ describe("ContentService", () => {
     });
 
     it("throws 409 if content is not in draft", async () => {
-      mockRepo.findOne.mockResolvedValue(makeContent({ status: "pending_approval" }));
+      mockRepo.findOne.mockResolvedValue(
+        makeContent({ status: ContentStatus.PENDING_APPROVAL })
+      );
       await expect(service.submitForApproval("content-1")).rejects.toMatchObject({
         statusCode: 409,
       });
     });
 
     it("moves draft to pending_approval", async () => {
-      mockRepo.findOne.mockResolvedValue(makeContent({ status: "draft" }));
+      mockRepo.findOne.mockResolvedValue(
+        makeContent({ status: ContentStatus.DRAFT })
+      );
       const result = await service.submitForApproval("content-1");
       expect(result.status).toBe("pending_approval");
     });
@@ -73,7 +80,9 @@ describe("ContentService", () => {
     });
 
     it("throws 409 if content is not pending_approval", async () => {
-      mockRepo.findOne.mockResolvedValue(makeContent({ status: "draft" }));
+      mockRepo.findOne.mockResolvedValue(
+        makeContent({ status: ContentStatus.DRAFT })
+      );
       await expect(
         service.decideApproval("content-1", "reviewer-1", "approved")
       ).rejects.toMatchObject({ statusCode: 409 });
@@ -81,7 +90,10 @@ describe("ContentService", () => {
 
     it("throws 403 if the reviewer is the author", async () => {
       mockRepo.findOne.mockResolvedValue(
-        makeContent({ status: "pending_approval", author_id: "author-1" })
+        makeContent({
+          status: ContentStatus.PENDING_APPROVAL,
+          author_id: "author-1",
+        })
       );
       await expect(
         service.decideApproval("content-1", "author-1", "approved")
@@ -89,14 +101,18 @@ describe("ContentService", () => {
     });
 
     it("throws 400 if rejecting without a reason", async () => {
-      mockRepo.findOne.mockResolvedValue(makeContent({ status: "pending_approval" }));
+      mockRepo.findOne.mockResolvedValue(
+        makeContent({ status: ContentStatus.PENDING_APPROVAL })
+      );
       await expect(
         service.decideApproval("content-1", "reviewer-1", "rejected")
       ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it("sets status to approved on approval", async () => {
-      mockRepo.findOne.mockResolvedValue(makeContent({ status: "pending_approval" }));
+      mockRepo.findOne.mockResolvedValue(
+        makeContent({ status: ContentStatus.PENDING_APPROVAL })
+      );
       const result = await service.decideApproval("content-1", "reviewer-1", "approved");
       expect(result.status).toBe("approved");
       expect(mockRepo.create).toHaveBeenCalledWith(
@@ -105,7 +121,9 @@ describe("ContentService", () => {
     });
 
     it("returns rejected content to draft, with the reason recorded", async () => {
-      mockRepo.findOne.mockResolvedValue(makeContent({ status: "pending_approval" }));
+      mockRepo.findOne.mockResolvedValue(
+        makeContent({ status: ContentStatus.PENDING_APPROVAL })
+      );
       const result = await service.decideApproval(
         "content-1",
         "reviewer-1",
@@ -122,16 +140,24 @@ describe("ContentService", () => {
   describe("publish", () => {
     it("throws 404 if content does not exist", async () => {
       mockRepo.findOne.mockResolvedValue(null);
-      await expect(service.publish("missing")).rejects.toMatchObject({ statusCode: 404 });
+      await expect(service.publish("missing")).rejects.toMatchObject({
+        statusCode: 404,
+      });
     });
 
     it("throws 409 if content is not approved", async () => {
-      mockRepo.findOne.mockResolvedValue(makeContent({ status: "draft" }));
-      await expect(service.publish("content-1")).rejects.toMatchObject({ statusCode: 409 });
+      mockRepo.findOne.mockResolvedValue(
+        makeContent({ status: ContentStatus.DRAFT })
+      );
+      await expect(service.publish("content-1")).rejects.toMatchObject({
+        statusCode: 409,
+      });
     });
 
     it("publishes and bumps the version", async () => {
-      mockRepo.findOne.mockResolvedValue(makeContent({ status: "approved", version: 1 }));
+      mockRepo.findOne.mockResolvedValue(
+        makeContent({ status: ContentStatus.APPROVED, version: 1 })
+      );
       const result = await service.publish("content-1");
       expect(result.status).toBe("published");
       expect(result.version).toBe(2);
