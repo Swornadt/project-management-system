@@ -167,13 +167,8 @@ const NewContentModalContent: React.FC<NewContentModalContentProps> = ({
             </div>
           </div>
 
-          {/* NOTE: Project and Author above are cosmetic for now. There's no
-              live Projects or Users API yet (see index.ts — both routers are
-              commented out), so real content always saves under the
-              placeholder project/author configured in ContentDashboard.
-              Swap this note out once those modules exist. */}
           <p className="text-[11px] text-[#9b9a97] -mt-2">
-            Project and Author selection isn't wired to real data yet — new content saves under a placeholder project and author for now.
+            Project and Author selection isn't wired to real data yet.
           </p>
 
           <div>

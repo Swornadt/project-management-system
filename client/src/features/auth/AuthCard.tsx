@@ -1,1 +1,3 @@
-//todo
+export default function AuthCard() {
+  return null;
+}

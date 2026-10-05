@@ -75,10 +75,6 @@ const ArticleDrawerContent: React.FC<ArticleDrawerContentProps> = ({
 
   // Workflow actions — these call the backend's real submit/decide/publish
   // endpoints (status only ever moves forward one step at a time; the only
-  // way back to draft is a reviewer's rejection, with a reason attached).
-  // The updated item comes back from the API response, not a local guess.
-  // TODO: once auth exists, gate Approve/Reject to reviewers only — the
-  // author of the content should never see these controls on their own item.
   const handleSubmitForApproval = async () => {
     setIsActionPending(true);
     try {
