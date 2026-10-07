@@ -22,19 +22,28 @@ const STATUS_UI_TO_API: Record<ContentItem["status"], ApiContentResponse["status
   published: "published",
 };
 
-// Deterministic placeholder author until GET /api/v1/users exists (it's
-// currently commented out server-side — see index.ts). Real name/avatar
-// data isn't available from the Content API alone; it would need either a
-// join server-side or a separate users lookup. Until then, this at least
-// renders something legible instead of blank fields.
-function placeholderAuthor(authorId: string): ContentItem["author"] {
-  const initials = authorId.slice(0, 2).toUpperCase();
+// Builds the avatar fields from a display name.
+function makeAuthor(name: string): ContentItem["author"] {
+  const initials =
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase() || "?";
   return {
-    name: `User ${authorId.slice(0, 8)}`,
+    name,
     initials,
     avatarBg: "bg-[#e6e0f5]",
     textColor: "text-[#5645d4]",
   };
+}
+
+// Used when the author's name isn't known (the user lookup is Admin/Manager
+// only, so Employees can't resolve other people's names).
+function placeholderAuthor(authorId: string): ContentItem["author"] {
+  return makeAuthor(`User ${authorId.slice(0, 8)}`);
 }
 
 function relativeTime(isoDate: string): string {
@@ -48,7 +57,8 @@ function relativeTime(isoDate: string): string {
 
 export function apiToContentItem(
   api: ApiContentResponse,
-  projectNameOverride?: string
+  projectNameOverride?: string,
+  authorNameOverride?: string
 ): ContentItem {
   return {
     id: api.content_id,
@@ -58,7 +68,7 @@ export function apiToContentItem(
     project: api.project_id,
     projectName: projectNameOverride ?? api.project_id,
     status: STATUS_API_TO_UI[api.status],
-    author: placeholderAuthor(api.author_id),
+    author: authorNameOverride ? makeAuthor(authorNameOverride) : placeholderAuthor(api.author_id),
     lastUpdated: relativeTime(api.updated_at),
     timestampHours: (Date.now() - new Date(api.updated_at).getTime()) / (1000 * 60 * 60),
     icon: "article",
@@ -74,12 +84,10 @@ export function apiToContentItem(
 }
 
 export function contentItemToCreateDto(
-  item: Pick<ContentItem, "title" | "slug" | "body" | "project">,
-  authorId: string
+  item: Pick<ContentItem, "title" | "slug" | "body" | "project">
 ): ApiCreateContentDto {
   return {
     project_id: item.project,
-    author_id: authorId,
     title: item.title,
     slug: item.slug,
     body: item.body,

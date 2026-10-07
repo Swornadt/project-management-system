@@ -128,7 +128,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, pro
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 text-xs text-center space-y-3">
-          <p className="text-[#ba1a1a]">No project configured — set VITE_DEV_PROJECT_ID in client/.env</p>
+          <p className="text-[#ba1a1a]">No project selected — pick one on the board first.</p>
           <button onClick={onClose} className="px-3.5 py-2 text-xs font-medium text-[#5d5b54] hover:bg-[#f0eeec] rounded-lg">
             Close
           </button>

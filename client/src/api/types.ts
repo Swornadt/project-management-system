@@ -87,9 +87,9 @@ export interface ApiContentResponse {
   updated_at: string;
 }
 
+// author_id is set by the server from the login token, so it isn't sent.
 export interface ApiCreateContentDto {
   project_id: string;
-  author_id: string;
   title: string;
   slug: string;
   body?: string;
@@ -103,8 +103,8 @@ export interface ApiUpdateContentDto {
   body?: string;
 }
 
+// reviewer_id is set by the server from the login token, so it isn't sent.
 export interface ApiDecideApprovalDto {
-  reviewer_id: string;
   decision: "approved" | "rejected";
   reason?: string;
 }

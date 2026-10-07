@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, X, ChevronDown } from 'lucide-react';
 import type { ContentStatus, ProjectId, SortOption } from '../../types';
+import type { ApiProjectResponse } from '../../api/types';
 
 interface StatusCountMap {
   all: number;
@@ -16,6 +17,7 @@ interface ContentFiltersProps {
   statusCounts: StatusCountMap;
   searchQuery: string;
   onSearchChange: (val: string) => void;
+  projects: ApiProjectResponse[];
   selectedProject: ProjectId;
   onSelectProject: (proj: ProjectId) => void;
   selectedSort: SortOption;
@@ -29,6 +31,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
   statusCounts,
   searchQuery,
   onSearchChange,
+  projects,
   selectedProject,
   onSelectProject,
   selectedSort,
@@ -53,13 +56,8 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
       parts.push(`Status: ${tabObj?.label || currentStatus}`);
     }
     if (selectedProject !== 'all') {
-      const projNames: Record<string, string> = {
-        'core-cms': 'Enterprise Core CMS',
-        security: 'Security & Architecture',
-        mobile: 'Design System Mobile',
-        cloud: 'Cloud Infrastructure',
-      };
-      parts.push(`Project: ${projNames[selectedProject] || selectedProject}`);
+      const projName = projects.find((p) => p.project_id === selectedProject)?.name;
+      parts.push(`Project: ${projName || selectedProject}`);
     }
     if (searchQuery.trim()) {
       parts.push(`Query: "${searchQuery}"`);
@@ -135,14 +133,15 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
             <select
               id="projectSelect"
               value={selectedProject}
-              onChange={(e) => onSelectProject(e.target.value as ProjectId)}
+              onChange={(e) => onSelectProject(e.target.value)}
               className="appearance-none bg-[#fafaf9] hover:bg-[#f0eeec] border border-[#e8e7e4] text-[#37352f] text-[13px] font-medium py-2 pl-3 pr-8 rounded-lg outline-none cursor-pointer shadow-2xs transition-colors"
             >
               <option value="all">Project: All Projects</option>
-              <option value="core-cms">Enterprise Core CMS</option>
-              <option value="security">Security &amp; Architecture</option>
-              <option value="mobile">Design System Mobile</option>
-              <option value="cloud">Cloud Infrastructure</option>
+              {projects.map((p) => (
+                <option key={p.project_id} value={p.project_id}>
+                  {p.name}
+                </option>
+              ))}
             </select>
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9b9a97] w-4 h-4" />
           </div>

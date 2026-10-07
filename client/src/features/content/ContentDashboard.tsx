@@ -14,7 +14,8 @@ import { Toast } from '../../components/layout/Toast';
 import { OtherViews } from './OtherViews';
 import { TaskBoard } from '../tasks/TaskBoard';
 import ProjectsPage from '../projects/ProjectsPage';
-import { contentApi, projectApi } from '../../api/axiosClient';
+import { contentApi, projectApi, userApi, getStoredUser } from '../../api/axiosClient';
+import type { ApiProjectResponse } from '../../api/types';
 import { NAV_PATHS, resolveNavKey } from '../../routes/navPaths';
 import {
   apiToContentItem,
@@ -28,18 +29,6 @@ import type {
   ViewStateMode,
   ActiveNavKey,
 } from '../../types';
-
-// STOPGAP: there's no auth or a real Projects API yet (both /users and
-// /projects are commented out in server/index.ts), so there's no logged-in
-// user and no real project to attach new content to. Set these to a real
-// seeded project/user UUID from your dev database to actually create or
-// review content end-to-end. Once auth exists, project_id/author_id should
-// come from real context instead of env vars — replace this block then.
-const DEV_PROJECT_ID = import.meta.env.VITE_DEV_PROJECT_ID as string | undefined;
-const DEV_AUTHOR_ID = import.meta.env.VITE_DEV_AUTHOR_ID as string | undefined;
-// Must differ from DEV_AUTHOR_ID — the backend 403s a reviewer approving
-// their own content (content.service.ts's self-approval check).
-const DEV_REVIEWER_ID = import.meta.env.VITE_DEV_REVIEWER_ID as string | undefined;
 
 function extractErrorMessage(err: unknown): string {
   if (err && typeof err === 'object' && 'response' in err) {
@@ -65,6 +54,8 @@ export const ContentDashboard = () => {
 
   // Content state
   const [allItems, setAllItems] = useState<ContentItem[]>([]);
+  const [projects, setProjects] = useState<ApiProjectResponse[]>([]);
+  const [authorNames, setAuthorNames] = useState<Map<string, string>>(new Map());
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -106,21 +97,40 @@ export const ContentDashboard = () => {
   useEffect(() => {
     let cancelled = false;
 
+    // /users/search is Admin/Manager only; for anyone else it 403s and we just
+    // fall back to the placeholder author name.
+    const loadUsers = userApi
+      .search({ limit: 100 })
+      .then((res) => res.data)
+      .catch(() => []);
+
     Promise.all([
       contentApi.list({ limit: 200 }),
       projectApi.list({ per_page: 100 }),
+      loadUsers,
     ])
-      .then(([contentResponse, projectResponse]) => {
+      .then(([contentResponse, projectResponse, users]) => {
         if (cancelled) return;
 
-        const projects = projectResponse.data ?? [];
+        const loadedProjects = projectResponse.data ?? [];
         const projectNameMap = new Map(
-          projects.map((project) => [project.project_id, project.name] as const)
+          loadedProjects.map((project) => [project.project_id, project.name] as const)
         );
 
+        const names = new Map<string, string>();
+        users.forEach((u) => names.set(u.user_id, `${u.first_name} ${u.last_name}`.trim()));
+        const me = getStoredUser();
+        if (me) names.set(me.user_id, `${me.first_name} ${me.last_name}`.trim());
+
+        setProjects(loadedProjects);
+        setAuthorNames(names);
         setAllItems(
           contentResponse.data.map((apiItem) =>
-            apiToContentItem(apiItem, projectNameMap.get(apiItem.project_id))
+            apiToContentItem(
+              apiItem,
+              projectNameMap.get(apiItem.project_id),
+              names.get(apiItem.author_id)
+            )
           )
         );
       })
@@ -136,6 +146,15 @@ export const ContentDashboard = () => {
       cancelled = true;
     };
   }, []);
+
+  // Maps an API response using the project/author names loaded above, so
+  // items keep their real names after create/update instead of showing ids.
+  const toItem = (api: Parameters<typeof apiToContentItem>[0]) =>
+    apiToContentItem(
+      api,
+      projects.find((p) => p.project_id === api.project_id)?.name,
+      authorNames.get(api.author_id)
+    );
 
   // Status Counts
   const statusCounts = useMemo(() => {
@@ -209,20 +228,17 @@ export const ContentDashboard = () => {
   };
 
   const handleCreateItem = async (payload: NewContentPayload) => {
-    const projectId = payload.projectId || DEV_PROJECT_ID;
-    if (!projectId || !DEV_AUTHOR_ID) {
-      throw new Error(
-        'No project/author configured — select a real project from the backend or set VITE_DEV_PROJECT_ID and VITE_DEV_AUTHOR_ID in .env.'
-      );
+    if (!payload.projectId) {
+      throw new Error('Select a project first — create one under Projects if the list is empty.');
     }
+    // The server sets the author from your login.
     const res = await contentApi.create({
-      project_id: projectId,
-      author_id: DEV_AUTHOR_ID,
+      project_id: payload.projectId,
       title: payload.title,
       slug: payload.slug,
       body: payload.body,
     });
-    const created = apiToContentItem(res.data);
+    const created = toItem(res.data);
     setAllItems((prev) => [created, ...prev]);
     showToast('Publication Created', `"${created.title}" added`);
   };
@@ -235,7 +251,7 @@ export const ContentDashboard = () => {
       id,
       contentItemToUpdateDto({ title: edits.title, body: edits.body })
     );
-    const updated = apiToContentItem(res.data);
+    const updated = toItem(res.data);
     // summary has no backend field yet — keep it client-side so it isn't
     // silently dropped from the drawer until Content grows a real column.
     const merged = { ...updated, summary: edits.summary };
@@ -245,45 +261,33 @@ export const ContentDashboard = () => {
 
   const handleSubmitForApproval = async (id: string) => {
     const res = await contentApi.submitForApproval(id);
-    const updated = apiToContentItem(res.data);
+    const updated = toItem(res.data);
     setAllItems((prev) => prev.map((it) => (it.id === id ? updated : it)));
     setSelectedItem(updated);
   };
 
   const handleApprove = async (id: string) => {
-    if (!DEV_REVIEWER_ID) {
-      throw new Error('No reviewer configured — set VITE_DEV_REVIEWER_ID in .env.');
-    }
-    const res = await contentApi.decideApproval(id, {
-      reviewer_id: DEV_REVIEWER_ID,
-      decision: 'approved',
-    });
-    const updated = apiToContentItem(res.data);
+    // The server uses your login as the reviewer (and blocks approving your own content).
+    const res = await contentApi.decideApproval(id, { decision: 'approved' });
+    const updated = toItem(res.data);
     setAllItems((prev) => prev.map((it) => (it.id === id ? updated : it)));
     setSelectedItem(updated);
   };
 
   const handleReject = async (id: string, reason: string) => {
-    if (!DEV_REVIEWER_ID) {
-      throw new Error('No reviewer configured — set VITE_DEV_REVIEWER_ID in .env.');
-    }
-    const res = await contentApi.decideApproval(id, {
-      reviewer_id: DEV_REVIEWER_ID,
-      decision: 'rejected',
-      reason,
-    });
+    const res = await contentApi.decideApproval(id, { decision: 'rejected', reason });
     // rejectionReason isn't in ApiContentResponse (GET doesn't return
     // approval history — see the note in contentMapper.ts), so it's applied
     // here from what we already know locally rather than dropped. It'll
     // survive until the next refetch, then disappear — a known gap.
-    const updated = { ...apiToContentItem(res.data), rejectionReason: reason };
+    const updated = { ...toItem(res.data), rejectionReason: reason };
     setAllItems((prev) => prev.map((it) => (it.id === id ? updated : it)));
     setSelectedItem(updated);
   };
 
   const handlePublish = async (id: string) => {
     const res = await contentApi.publish(id);
-    const updated = apiToContentItem(res.data);
+    const updated = toItem(res.data);
     setAllItems((prev) => prev.map((it) => (it.id === id ? updated : it)));
     setSelectedItem(updated);
   };
@@ -426,6 +430,7 @@ export const ContentDashboard = () => {
                   statusCounts={statusCounts}
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
+                  projects={projects}
                   selectedProject={selectedProject}
                   onSelectProject={setSelectedProject}
                   selectedSort={selectedSort}

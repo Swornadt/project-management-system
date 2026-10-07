@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ContentDashboard from "./features/content/ContentDashboard";
 import { RequireAuth } from "./features/auth/RequireAuth";
 import LoginPage from "./pages/LoginPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import { NAV_PATHS, DEFAULT_NAV } from "./routes/navPaths";
 import UserManagement from "./pages/UserManagement";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -11,6 +14,10 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public auth pages — the emailed links land on verify-email and reset-password. */}
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/login" element={<LoginPage />} />
         {/* Bare "/" -> the default section's real URL, so the address bar
             always reflects an actual page rather than a redirect target. */}
