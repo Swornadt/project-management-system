@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ContentDashboard from "./features/content/ContentDashboard";
 import { RequireAuth } from "./features/auth/RequireAuth";
-import LoginPage from "./pages/LoginPage";
+import AuthPage from "./pages/AuthPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -18,7 +18,7 @@ const App = () => {
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<AuthPage />} />
         {/* Bare "/" -> the default section's real URL, so the address bar
             always reflects an actual page rather than a redirect target. */}
         <Route path="/" element={<Navigate to={NAV_PATHS[DEFAULT_NAV]} replace />} />
