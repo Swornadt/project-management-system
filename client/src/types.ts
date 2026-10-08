@@ -1,6 +1,7 @@
 export type ContentStatus = 'all' | 'draft' | 'pending' | 'approved' | 'published';
 
-export type ProjectId = 'all' | 'core-cms' | 'security' | 'mobile' | 'cloud' | 'strategy';
+// 'all', or a real project_id from the API.
+export type ProjectId = string;
 
 export type SortOption = 'newest' | 'oldest' | 'alphabetical';
 

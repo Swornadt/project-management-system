@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { taskApi } from '../../api/axiosClient';
 import type { ApiTaskResponse } from '../../api/taskTypes';
+import { FileAttachments } from '../files/FileAttachments';
 
 interface TaskDrawerProps {
   task: ApiTaskResponse | null;
@@ -141,6 +142,8 @@ const TaskDrawerContent: React.FC<{
               </span>
             </div>
           </div>
+
+          <FileAttachments scope="task" id={task.task_id} />
         </div>
 
         <div className="px-5 py-3 border-t border-[#e8e7e4] flex items-center justify-between">

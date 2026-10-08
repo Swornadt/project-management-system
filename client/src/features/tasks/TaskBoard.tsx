@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw, Clock } from 'lucide-react';
-import { taskApi } from '../../api/axiosClient';
+import { projectApi, taskApi } from '../../api/axiosClient';
+import type { ApiProjectResponse } from '../../api/types';
 import type { ApiTaskResponse, TaskStatus } from '../../api/taskTypes';
 import { TaskDrawer } from './TaskDrawer';
 import { NewTaskModal } from './NewTaskModal';
-
-// STOPGAP: same pattern as Content — no Projects UI yet, so the board
-// operates within one project pulled from env. Swap for real project
-// context once a Projects picker exists.
-const DEV_PROJECT_ID = import.meta.env.VITE_DEV_PROJECT_ID as string | undefined;
 
 const COLUMNS: { id: TaskStatus; label: string; accent: string }[] = [
   { id: 'backlog', label: 'Backlog', accent: 'border-[#9b9a97]' },
@@ -35,59 +32,105 @@ function extractErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong';
 }
 
+const LAST_PROJECT_KEY = 'taskBoardProject';
+
+interface TaskState {
+  key: string; // "<projectId>:<reloadKey>" the tasks were fetched for
+  tasks: ApiTaskResponse[];
+  error?: string;
+}
+
 export const TaskBoard: React.FC = () => {
-  const [tasks, setTasks] = useState<ApiTaskResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(!!DEV_PROJECT_ID);
-  const [loadError, setLoadError] = useState<string | null>(
-    DEV_PROJECT_ID ? null : 'No project configured — set VITE_DEV_PROJECT_ID in client/.env'
-  );
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlProjectId = searchParams.get('project');
+
+  const [projects, setProjects] = useState<ApiProjectResponse[] | null>(null);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [projectsReload, setProjectsReload] = useState(0);
+
+  const [taskState, setTaskState] = useState<TaskState | null>(null);
+  const [tasksReload, setTasksReload] = useState(0);
+
   const [selectedTask, setSelectedTask] = useState<ApiTaskResponse | null>(null);
   const [newModalOpen, setNewModalOpen] = useState(false);
 
-  const fetchTasks = () => {
-    if (!DEV_PROJECT_ID) return;
-    taskApi
-      .listForProject(DEV_PROJECT_ID)
-      .then((res) => setTasks(res.data))
-      .catch((err) => setLoadError(extractErrorMessage(err)))
-      .finally(() => setIsLoading(false));
-  };
+  // Projects the user can see (the API already limits this by role/membership;
+  // archived ones are excluded by default).
+  useEffect(() => {
+    let cancelled = false;
+    projectApi
+      .list({ per_page: 100 })
+      .then((res) => {
+        if (!cancelled) {
+          setProjects(res.data);
+          setProjectsError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setProjectsError(extractErrorMessage(err));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectsReload]);
+
+  // Which project the board shows: ?project= in the URL, else the last one
+  // used, else the first in the list.
+  const projectId = projects
+    ? (
+        projects.find((p) => p.project_id === urlProjectId) ??
+        projects.find((p) => p.project_id === localStorage.getItem(LAST_PROJECT_KEY)) ??
+        projects[0]
+      )?.project_id
+    : undefined;
+
+  const taskKey = `${projectId}:${tasksReload}`;
+  const tasksLoading = Boolean(projectId) && taskState?.key !== taskKey;
+  const tasks = taskState?.tasks ?? [];
+  const tasksError = taskState?.key === taskKey ? taskState.error : undefined;
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    if (!projectId) return;
+    let cancelled = false;
+    const key = `${projectId}:${tasksReload}`;
+    taskApi
+      .listForProject(projectId)
+      .then((res) => {
+        if (!cancelled) setTaskState({ key, tasks: res.data });
+      })
+      .catch((err) => {
+        if (!cancelled) setTaskState({ key, tasks: [], error: extractErrorMessage(err) });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, tasksReload]);
 
-  const handleRetry = () => {
-    setIsLoading(true);
-    setLoadError(null);
-    fetchTasks();
+  const updateTasks = (fn: (prev: ApiTaskResponse[]) => ApiTaskResponse[]) =>
+    setTaskState((s) => (s ? { ...s, tasks: fn(s.tasks) } : s));
+
+  const handleProjectChange = (id: string) => {
+    localStorage.setItem(LAST_PROJECT_KEY, id);
+    setSelectedTask(null);
+    setSearchParams({ project: id });
   };
 
   const handleTaskUpdated = (updated: ApiTaskResponse) => {
-    setTasks((prev) => prev.map((t) => (t.task_id === updated.task_id ? updated : t)));
+    updateTasks((prev) => prev.map((t) => (t.task_id === updated.task_id ? updated : t)));
     setSelectedTask(updated);
   };
 
   const handleTaskDeleted = (id: string) => {
-    setTasks((prev) => prev.filter((t) => t.task_id !== id));
+    updateTasks((prev) => prev.filter((t) => t.task_id !== id));
     setSelectedTask(null);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24 text-[#5d5b54] text-sm gap-2">
-        <RefreshCw className="w-4 h-4 animate-spin" />
-        <span>Loading tasks...</span>
-      </div>
-    );
-  }
-
-  if (loadError) {
+  if (projectsError) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
-        <p className="text-sm text-[#ba1a1a]">Couldn't load tasks: {loadError}</p>
+        <p className="text-sm text-[#ba1a1a]">Couldn't load projects: {projectsError}</p>
         <button
-          onClick={handleRetry}
+          onClick={() => setProjectsReload((k) => k + 1)}
           className="px-3 py-1.5 rounded-lg bg-[#5645d4] hover:bg-[#4534b3] text-white text-xs font-medium transition-colors"
         >
           Retry
@@ -96,14 +139,50 @@ export const TaskBoard: React.FC = () => {
     );
   }
 
+  if (projects === null) {
+    return (
+      <div className="flex items-center justify-center py-24 text-[#5d5b54] text-sm gap-2">
+        <RefreshCw className="w-4 h-4 animate-spin" />
+        <span>Loading...</span>
+      </div>
+    );
+  }
+
+  if (projects.length === 0) {
+    return (
+      <div className="py-24 text-center space-y-2">
+        <p className="text-sm text-[#5d5b54]">You don't have any projects yet.</p>
+        <Link to="/projects" className="text-xs text-[#5645d4] hover:underline">
+          Go to Projects
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-[26px] font-semibold text-[#37352f] tracking-tight">Task Board</h1>
-          <p className="text-[14px] text-[#5d5b54] mt-0.5">
-            {tasks.length} task{tasks.length === 1 ? '' : 's'} in this project
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <select
+              value={projectId}
+              onChange={(e) => handleProjectChange(e.target.value)}
+              aria-label="Project"
+              className="text-xs px-2.5 py-1.5 border border-[#e8e7e4] rounded-lg bg-white outline-none focus:border-[#5645d4] max-w-[260px]"
+            >
+              {projects.map((p) => (
+                <option key={p.project_id} value={p.project_id}>
+                  {p.key_code} · {p.name}
+                </option>
+              ))}
+            </select>
+            {!tasksLoading && !tasksError && (
+              <span className="text-[13px] text-[#5d5b54]">
+                {tasks.length} task{tasks.length === 1 ? '' : 's'}
+              </span>
+            )}
+          </div>
         </div>
         <button
           onClick={() => setNewModalOpen(true)}
@@ -114,6 +193,22 @@ export const TaskBoard: React.FC = () => {
         </button>
       </div>
 
+      {tasksLoading ? (
+        <div className="flex items-center justify-center py-24 text-[#5d5b54] text-sm gap-2">
+          <RefreshCw className="w-4 h-4 animate-spin" />
+          <span>Loading tasks...</span>
+        </div>
+      ) : tasksError ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
+          <p className="text-sm text-[#ba1a1a]">Couldn't load tasks: {tasksError}</p>
+          <button
+            onClick={() => setTasksReload((k) => k + 1)}
+            className="px-3 py-1.5 rounded-lg bg-[#5645d4] hover:bg-[#4534b3] text-white text-xs font-medium transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      ) : (
       <div className="grid grid-flow-col auto-cols-[260px] gap-4 overflow-x-auto pb-2">
         {COLUMNS.map((col) => {
           const colTasks = tasks.filter((t) => t.status === col.id);
@@ -161,6 +256,7 @@ export const TaskBoard: React.FC = () => {
           );
         })}
       </div>
+      )}
 
       <TaskDrawer
         task={selectedTask}
@@ -171,9 +267,9 @@ export const TaskBoard: React.FC = () => {
       <NewTaskModal
         isOpen={newModalOpen}
         onClose={() => setNewModalOpen(false)}
-        projectId={DEV_PROJECT_ID}
+        projectId={projectId}
         onCreated={(created) => {
-          setTasks((prev) => [created, ...prev]);
+          updateTasks((prev) => [created, ...prev]);
           setNewModalOpen(false);
         }}
       />

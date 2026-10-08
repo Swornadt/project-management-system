@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 interface AuthCardProps {
   onSubmit: (email: string, password: string) => Promise<void>;
@@ -56,6 +57,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSubmit }) => {
             placeholder="••••••••"
             className="w-full text-xs px-2.5 py-2 border border-[#e8e7e4] rounded-lg outline-none focus:border-[#5645d4]"
           />
+        </div>
+
+        <div className="text-right -mt-1">
+          <Link to="/forgot-password" className="text-[#5645d4] hover:underline">
+            Forgot password?
+          </Link>
         </div>
 
         {error && <p className="text-[#ba1a1a] bg-[#fde0e0] p-2 rounded-lg">{error}</p>}

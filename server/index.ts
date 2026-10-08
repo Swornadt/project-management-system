@@ -25,7 +25,7 @@ import { startPublishScheduler } from "./src/shared/jobs/publish-scheduled.jobs"
 dotenv.config();
 
 export const app = express();
-const PORT = Number(process.env.PORT) || 5001;
+const PORT = Number(process.env.PORT) || 5000;
 const API_PREFIX = "/api/v1";
 
 app.use(cors());

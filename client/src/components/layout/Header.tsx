@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { ActiveNavKey } from '../../types';
 import { ELEANOR_VANCE_AVATAR } from '../../data/mockContent';
+import { NotificationBell } from '../../features/notifications/NotificationBell';
 
 interface HeaderProps {
   activeNav: ActiveNavKey;
@@ -103,6 +104,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Quick action buttons */}
         <div className="flex items-center gap-1 text-[#5d5b54]">
+          <NotificationBell />
           <button
             id="share-btn"
             onClick={handleShare}
