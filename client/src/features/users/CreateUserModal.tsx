@@ -29,7 +29,7 @@ const CreateUserModal = ({ onClose, onCreate }: CreateUserModalProps) => {
       try {
         const response = await axios.get("/api/v1/roles", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         });
         setRoles(response.data.data || []);
