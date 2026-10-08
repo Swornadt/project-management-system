@@ -14,6 +14,7 @@ import { Toast } from '../../components/layout/Toast';
 import { OtherViews } from './OtherViews';
 import { TaskBoard } from '../tasks/TaskBoard';
 import ProjectsPage from '../projects/ProjectsPage';
+import { ExecutiveOverview } from '../overview/ExecutiveOverview';
 import { contentApi, projectApi, userApi, getStoredUser } from '../../api/axiosClient';
 import type { ApiProjectResponse } from '../../api/types';
 import { NAV_PATHS, resolveNavKey } from '../../routes/navPaths';
@@ -342,6 +343,8 @@ export const ContentDashboard = () => {
           <div className="max-w-[1240px] w-full mx-auto py-8 px-1 sm:px-4 flex flex-col gap-6">
             {activeNav === 'projects-and-roadmaps' ? (
               <ProjectsPage />
+            ) : activeNav === 'executive-overview' ? (
+              <ExecutiveOverview />
             ) : isLoading ? (
               <div className="flex items-center justify-center py-24 text-[#5d5b54] text-sm gap-2">
                 <RefreshCw className="w-4 h-4 animate-spin" />
