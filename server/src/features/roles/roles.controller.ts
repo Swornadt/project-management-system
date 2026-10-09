@@ -7,8 +7,8 @@ export async function getAllRoles(
   res: Response<ApiResponse<any[]>>,
   _next: NextFunction
 ) {
-  const roles = await rolesService.findAll();
-  
+  const roles = await rolesService.findAllRoles();
+
   const body: ApiResponse<any[]> = {
     success: true,
     statusCode: 200,

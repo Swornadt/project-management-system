@@ -20,12 +20,15 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
   constructor() {
     super(Approval, "approval_id");
   }
+
   async submit(
     contentId: string,
     submitterId: string,
-    dto: SubmitForApprovalDto
+    dto: SubmitForApprovalDto = {}
   ): Promise<Approval> {
-    const content = await getRepo(Content).findOne({ where: { content_id: contentId } });
+    const content = await getRepo(Content).findOne({
+      where: { content_id: contentId },
+    });
     if (!content) throw new HttpError(404, "Content not found");
 
     if (
@@ -53,11 +56,13 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
         content_id: contentId,
         submitted_by: submitterId,
         status: ApprovalStatus.PENDING,
-        notes: dto.notes ?? null,
+        notes: dto?.notes ?? null,
       });
       const saved = await approvalRepo.save(approval);
 
-      await contentRepo.update(contentId, { status: ContentStatus.PENDING_APPROVAL });
+      await contentRepo.update(contentId, {
+        status: ContentStatus.PENDING_APPROVAL,
+      });
 
       await logRepo.save(
         logRepo.create({
@@ -69,6 +74,7 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
           description: `Submitted "${content.title}" for approval`,
         })
       );
+
       const reviewers = await mgr
         .getRepository(User)
         .createQueryBuilder("u")
@@ -93,6 +99,7 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
       return saved;
     });
   }
+
   async approve(
     approvalId: string,
     reviewerId: string,
@@ -113,7 +120,10 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
     let scheduledFor: Date | null = null;
     if (publishMode === PublishMode.SCHEDULED) {
       if (!dto.scheduled_for) {
-        throw new HttpError(400, "Field 'scheduled_for' is required when publish is 'scheduled'");
+        throw new HttpError(
+          400,
+          "Field 'scheduled_for' is required when publish is 'scheduled'"
+        );
       }
       scheduledFor = new Date(dto.scheduled_for);
       if (isNaN(scheduledFor.getTime())) {
@@ -192,6 +202,7 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
       return saved;
     });
   }
+
   async reject(
     approvalId: string,
     reviewerId: string,
@@ -203,7 +214,10 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
       throw new HttpError(409, `Approval already ${approval.status}`);
     }
     if (!dto.reason || dto.reason.trim().length < 5) {
-      throw new HttpError(400, "A reason (at least 5 characters) is required for rejection");
+      throw new HttpError(
+        400,
+        "A reason (at least 5 characters) is required for rejection"
+      );
     }
 
     return AppDataSource.transaction(async (mgr) => {
@@ -255,6 +269,7 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
       return saved;
     });
   }
+
   async cancel(approvalId: string, userId: string): Promise<Approval> {
     const approval = await this.findOne(approvalId);
     if (!approval) throw new HttpError(404, "Approval not found");
@@ -296,6 +311,7 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
       return saved;
     });
   }
+
   async listPending(
     userRoleName: string,
     userId: string,
@@ -323,12 +339,14 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
     const [items, total] = await qb.getManyAndCount();
     return { items, total, limit, offset, count: items.length };
   }
+
   async listForContent(contentId: string): Promise<Approval[]> {
     return this.repo().find({
       where: { content_id: contentId },
       order: { submitted_at: "DESC" },
     });
   }
+
   async publishDue(): Promise<number> {
     return AppDataSource.transaction(async (mgr) => {
       const contentRepo = mgr.getRepository(Content);
@@ -377,4 +395,5 @@ export class ApprovalsService extends BaseCRUDService<Approval> {
     });
   }
 }
+
 export const approvalsService = new ApprovalsService();

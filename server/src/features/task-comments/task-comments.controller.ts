@@ -17,19 +17,29 @@ export async function findCommentsForTask(
   const items = await taskCommentService.findAllForTask(req.params.taskId);
   res.status(200).json({ success: true, statusCode: 200, data: items as TaskCommentResponse[] });
 }
-
 export async function createTaskComment(
   req: Request<unknown, unknown, CreateTaskCommentDto>,
   res: Response<ApiResponse<TaskCommentResponse>>,
   next: NextFunction
 ) {
-  if (!req.body.task_id || !req.body.comment) {
+  const taskId = req.body.task_id;
+  const comment = req.body.comment?.trim();
+
+  if (!taskId || !comment) {
     next(new HttpError(400, "Fields 'task_id' and 'comment' are required"));
     return;
   }
+
   const userId = (req as AuthRequest).user!.userId;
+
   try {
-    const created = await taskCommentService.create({ ...req.body, user_id: userId });
+    const created = await taskCommentService.create({
+      ...req.body,
+      task_id: taskId,
+      comment,
+      user_id: userId,
+    });
+
     res.status(201).json({
       success: true,
       statusCode: 201,
@@ -40,7 +50,6 @@ export async function createTaskComment(
     next(err);
   }
 }
-
 export async function updateTaskComment(
   req: Request<{ id: string }, unknown, UpdateTaskCommentDto>,
   res: Response<ApiResponse<TaskCommentResponse>>,

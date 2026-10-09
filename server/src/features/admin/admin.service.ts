@@ -4,6 +4,7 @@ import { Project } from "../../entities/project.entity";
 import { Task } from "../../entities/task.entity";
 import { Content } from "../../entities/content.entity";
 import { IsNull, Not, MoreThan } from "typeorm";
+import { ContentStatus } from "../../entities/approval.entity";
 
 export class AdminService {
   async getDashboardStats() {
@@ -34,7 +35,7 @@ export class AdminService {
       taskRepo.count(),
       taskRepo.count({ where: { status: 'Done' } }),
       contentRepo.count(),
-      contentRepo.count({ where: { status: 'Published' } }),
+      contentRepo.count({ where: { status: ContentStatus.PUBLISHED } }),
       userRepo.count({ where: { deleted_at: IsNull(), created_at: MoreThan(thirtyDaysAgo) } }),
       projectRepo.count({ where: { created_at: MoreThan(thirtyDaysAgo) } }),
     ]);
