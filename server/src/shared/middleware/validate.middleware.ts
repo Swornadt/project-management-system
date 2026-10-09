@@ -16,16 +16,38 @@ export function validateBody<T>(
 export function requireParams(required: string[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
     const missing: string[] = [];
+    const invalidType: string[] = [];
+
     for (const field of required) {
       const val = (req.body as Record<string, unknown>)[field];
+
+      // 1. Missing check (undefined, null, empty string)
       if (val === undefined || val === null || val === "") {
         missing.push(field);
+        continue;
+      }
+
+      // 2. Type check — all required body fields must be strings
+      if (typeof val !== "string") {
+        invalidType.push(field);
       }
     }
+
     if (missing.length > 0) {
       next(new HttpError(400, `Missing required fields: ${missing.join(", ")}`));
       return;
     }
+
+    if (invalidType.length > 0) {
+      next(
+        new HttpError(
+          400,
+          `Invalid type for fields (expected string): ${invalidType.join(", ")}`
+        )
+      );
+      return;
+    }
+
     next();
   };
 }

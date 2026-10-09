@@ -27,6 +27,21 @@ export function errorHandler(
   res: Response<ApiResponse<never>>,
   _next: NextFunction
 ) {
+  // 🆕 1. Handle malformed JSON from body-parser → 400 (not 500)
+  if (
+    err instanceof SyntaxError &&
+    "body" in err &&
+    "type" in err &&
+    (err as any).type === "entity.parse.failed"
+  ) {
+    return res.status(400).json({
+      success: false,
+      error: "Invalid JSON in request body",
+      statusCode: 400,
+    } as ApiResponse<never>);
+  }
+
+  // 2. Handle Zod validation errors → 400
   if (err instanceof ZodError) {
     const body = {
       success: false,

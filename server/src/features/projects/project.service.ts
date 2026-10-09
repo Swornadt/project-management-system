@@ -33,7 +33,7 @@ const VALID_PRIORITIES = [
 const TASK_STATUS = {
   TODO: "todo",
   IN_PROGRESS: "in_progress",
-  COMPLETED: "completed",
+  COMPLETED: "done",
 } as const;
 
 const ALLOWED_SORT_FIELDS = [

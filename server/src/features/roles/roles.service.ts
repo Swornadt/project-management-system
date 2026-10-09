@@ -16,7 +16,7 @@ export class RolesService extends BaseCRUDService<Role, CreateRoleDto, UpdateRol
     super(Role, "role_id");
   }
 
-  async findAll(): Promise<Role[]> {
+  async findAllRoles(): Promise<Role[]> {
     return this.getRepository().find();
   }
 

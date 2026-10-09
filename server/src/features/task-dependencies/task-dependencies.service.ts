@@ -27,6 +27,13 @@ export class TaskDependencyService {
       throw new HttpError(400, "A task cannot depend on itself");
     }
 
+    const existing = await this.repo().findOne({
+      where: { task_id, depends_on_task_id } as any,
+    });
+    if (existing) {
+      throw new HttpError(409, "This dependency already exists");
+    }
+
     const taskRepo = getRepo(Task);
     const [task, dependsOnTask] = await Promise.all([
       taskRepo.findOne({ where: { task_id } as any }),
@@ -35,10 +42,11 @@ export class TaskDependencyService {
     if (!task) throw new HttpError(404, "Task not found");
     if (!dependsOnTask) throw new HttpError(404, "Dependency target task not found");
 
-    // Prevent creating a cycle: if depends_on_task_id can already (directly
-    // or transitively) reach task_id, adding this edge would close a loop.
     if (await this.wouldCreateCycle(task_id, depends_on_task_id)) {
-      throw new HttpError(409, "This dependency would create a circular reference between tasks");
+      throw new HttpError(
+        409,
+        "This dependency would create a circular reference between tasks"
+      );
     }
 
     const dependency = this.repo().create({
@@ -57,8 +65,10 @@ export class TaskDependencyService {
     return (result.affected ?? 0) > 0;
   }
 
-  /** Breadth-first search: can `startTaskId` reach `targetTaskId` via existing "depends on" edges? */
-  private async wouldCreateCycle(targetTaskId: string, startTaskId: string): Promise<boolean> {
+  private async wouldCreateCycle(
+    targetTaskId: string,
+    startTaskId: string
+  ): Promise<boolean> {
     const visited = new Set<string>([startTaskId]);
     const queue: string[] = [startTaskId];
 

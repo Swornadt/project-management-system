@@ -113,6 +113,27 @@ export class TaskService extends BaseCRUDService<Task, CreateTaskDto, UpdateTask
     return task;
   }
 
+  override async update(id: string, payload: UpdateTaskDto): Promise<Task | null> {
+    if (payload.priority && !TASK_PRIORITIES.includes(payload.priority as TaskPriority)) {
+      throw new HttpError(
+        400,
+        `Invalid priority '${payload.priority}'. Allowed: ${TASK_PRIORITIES.join(", ")}`
+      );
+    }
+
+    if (payload.parent_task_id) {
+      const parent = await this.findOne(payload.parent_task_id);
+      if (!parent) throw new HttpError(400, "Parent task does not exist");
+
+      const current = await this.findOne(id);
+      if (current && parent.project_id !== current.project_id) {
+        throw new HttpError(400, "Parent task must belong to the same project");
+      }
+    }
+
+    return super.update(id, payload);
+  }
+
   async updateStatus(
     id: string,
     newStatus: string,

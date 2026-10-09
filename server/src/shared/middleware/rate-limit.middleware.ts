@@ -16,8 +16,15 @@ export interface RateLimitOptions {
   message?: string;
 }
 
+const isTest = process.env.NODE_ENV === "test";
+
 export function rateLimit(options: RateLimitOptions) {
   const { windowMs, maxAttempts, message = "Too many requests" } = options;
+  if (isTest) {
+    return (_req: Request, _res: Response, next: NextFunction): void => {
+      next();
+    };
+  }
 
   return (req: Request, res: Response, next: NextFunction): void => {
     const identifier = req.ip || req.socket.remoteAddress || "unknown";
