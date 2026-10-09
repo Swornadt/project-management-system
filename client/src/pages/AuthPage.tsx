@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { setAccessToken } from "../api/axiosClient";
+import { saveSession } from "../api/session";
 import { NAV_PATHS, DEFAULT_NAV } from "../routes/navPaths";
 
 type AuthMode = "login" | "register";
@@ -71,7 +71,7 @@ const AuthPage = () => {
 
         if (response.data.success) {
           setMessage("Login successful");
-          setAccessToken(response.data.data.accessToken);
+          saveSession(response.data.data);
           setTimeout(() => {
             window.location.href = NAV_PATHS[DEFAULT_NAV];
           }, 1000);

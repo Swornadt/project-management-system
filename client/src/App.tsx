@@ -5,6 +5,7 @@ import AuthPage from "./pages/AuthPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ProfilePage from "./pages/ProfilePage";
 import { NAV_PATHS, DEFAULT_NAV } from "./routes/navPaths";
 import UserManagement from "./pages/UserManagement";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -20,6 +21,14 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/login" element={<AuthPage />} />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <ProfilePage />
+            </RequireAuth>
+          }
+        />
         {/* Bare "/" -> the default section's real URL, so the address bar
             always reflects an actual page rather than a redirect target. */}
         <Route path="/" element={<Navigate to={NAV_PATHS[DEFAULT_NAV]} replace />} />

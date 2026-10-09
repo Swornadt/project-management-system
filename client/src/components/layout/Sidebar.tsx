@@ -17,7 +17,9 @@ import {
   Bell,
 } from 'lucide-react';
 import type { ActiveNavKey } from '../../types';
-import { ELEANOR_VANCE_AVATAR } from '../../data/mockContent';
+import { useNavigate } from 'react-router-dom';
+import { getStoredUser } from '../../api/axiosClient';
+import { signOut } from '../../api/session';
 
 interface SidebarProps {
   activeNav: ActiveNavKey;
@@ -39,6 +41,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [currentWorkspace, setCurrentWorkspace] = useState('Acme Global Operations');
+  const navigate = useNavigate();
+  const currentUser = getStoredUser();
+  const displayName = currentUser ? `${currentUser.first_name} ${currentUser.last_name}`.trim() : 'Account';
+  const initials =
+    displayName
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase() || '?';
 
   const workspaces = [
     { name: 'Acme Global Operations', icon: 'A', bg: 'bg-[#ffe8d4]', desc: 'Primary Headquarters' },
@@ -254,17 +266,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className="flex items-center justify-between p-2 rounded-lg hover:bg-[#f0eeec] hover:text-[#171c1f] cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <img
-                src={ELEANOR_VANCE_AVATAR}
-                alt="Eleanor Vance profile"
-                referrerPolicy="no-referrer"
-                className="w-7 h-7 rounded-full object-cover border border-[#e8e7e4]"
-              />
+              <div className="w-7 h-7 rounded-full bg-[#e6e0f5] text-[#5645d4] text-[11px] font-semibold flex items-center justify-center border border-[#e8e7e4] shrink-0">
+                {initials}
+              </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-[13px] font-medium text-[#37352f] truncate leading-tight">
-                  Eleanor Vance
+                  {displayName}
                 </span>
-                <span className="text-[11px] text-[#9b9a97] truncate">Operations Lead</span>
+                <span className="text-[11px] text-[#9b9a97] truncate">{currentUser?.role_name ?? ""}</span>
               </div>
             </div>
             <MoreHorizontal className="w-4 h-4 text-[#787671]" />
@@ -277,16 +286,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-2.5 py-1.5 border-b border-[#f1efed]">
-                <div className="text-[13px] font-semibold text-[#37352f]">Eleanor Vance</div>
-                <div className="text-[11px] text-[#787671]">eleanor.vance@acme-global.org</div>
+                <div className="text-[13px] font-semibold text-[#37352f]">{displayName}</div>
+                <div className="text-[11px] text-[#787671]">{currentUser?.email ?? ""}</div>
               </div>
               <div className="py-1">
                 <button
-                  onClick={() => setUserMenuOpen(false)}
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    navigate('/profile');
+                  }}
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-[#5d5b54] hover:bg-[#f0f4f8] rounded-md transition-colors text-left"
                 >
                   <Settings className="w-3.5 h-3.5" />
-                  <span>Account Settings</span>
+                  <span>Profile &amp; Security</span>
                 </button>
                 <button
                   onClick={() => setUserMenuOpen(false)}
@@ -298,7 +310,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div className="pt-1 border-t border-[#f1efed]">
                 <button
-                  onClick={() => setUserMenuOpen(false)}
+                  onClick={signOut}
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-[#ba1a1a] hover:bg-[#ffdad6]/40 rounded-md transition-colors text-left"
                 >
                   <LogOut className="w-3.5 h-3.5" />
